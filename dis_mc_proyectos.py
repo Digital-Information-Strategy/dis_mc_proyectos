@@ -147,24 +147,17 @@ class sale_order(osv.osv):
 		res[ids[0]]=t_gravado+t_excento+impuesto
 		return res
 	
-	'''def _amount_impuesto(self, cr, uid, ids, field_name, arg, context=None):
+	def _amount_impuesto(self, cr, uid, ids, field_name, arg, context=None):
 		cur_obj = self.pool.get('res.currency')
 		res = {}
 		for order in self.browse(cr, uid, ids, context=context):
-			#res[order.id] = {
-                #'amount_untaxed': 0.0,
-                #'cost_impuesto': 0.0,
-                #'amount_total': 0.0,
-			#}
-			val = val1 = 0.0
+			res[order.id] = 0.0
+			val = 0.0
 			cur = order.pricelist_id.currency_id
 			for line in order.order_line:
-                #val1 += line.price_subtotal
 				val += self._amount_line_tax(cr, uid, line, context=context)
-			res[order.id]= cur_obj.round(cr, uid, cur, val)
-            #res[order.id]['amount_untaxed'] = cur_obj.round(cr, uid, cur, val1)
-            #res[order.id]['amount_total'] = res[order.id]['amount_untaxed'] + res[order.id]['amount_tax']
-		return res'''
+			res[order.id] = cur_obj.round(cr, uid, cur, val)
+		return res
 	
 	_columns = {
 		'sale_materials_list_line': fields.one2many('sale.order.materials.line','order_id','Lista de Materiales', required=True),
@@ -178,7 +171,7 @@ class sale_order(osv.osv):
 		'cost_utilidad': fields.function(_amount_utilidad, string='Utilidad', digits_compute= dp.get_precision('Product Price')),
 		'cost_total_gravado': fields.function(_amount_gravado, string='Total Gravado', digits_compute= dp.get_precision('Product Price')),
 		'cost_total_excento': fields.function(_amount_excento, string='Total Excento', digits_compute= dp.get_precision('Product Price')),
-		#'cost_impuestos': fields.function(_amount_impuesto, string='Impuestos', digits_compute= dp.get_precision('Product Price')),
+		'cost_impuestos': fields.function(_amount_impuesto, string='Impuestos', digits_compute= dp.get_precision('Product Price')),
 		'cost_total': fields.function(_amount_cost_total, string='Total', digits_compute= dp.get_precision('Product Price')),
 		}
 	def btn_limpiar_lineas(self, cr, uid, ids, context=None):

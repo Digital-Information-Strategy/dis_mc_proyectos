@@ -219,8 +219,7 @@
                                 <field name="cost_tpa" widget="monetary" options="{'currency_field': 'currency_id'}"/>
                                 <field name="cost_tps" widget="monetary" options="{'currency_field': 'currency_id'}"/>
                                 <field name="cost_utilidad" widget="monetary" options="{'currency_field': 'currency_id'}"/>
-                                <b><label for="amount_tax"/></b>
-                                <field name="amount_tax" nolabel="1" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                <field name="cost_impuestos" nolabel="0" widget="monetary" options="{'currency_field': 'currency_id'}"/>
                                 <field name="cost_total_gravado" widget="monetary" options="{'currency_field': 'currency_id'}"/>
                                 <field name="cost_total_excento" widget="monetary" options="{'currency_field': 'currency_id'}"/>
                                 <div class="oe_subtotal_footer_separator oe_inline">
