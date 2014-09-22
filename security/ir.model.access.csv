@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+dis_mc_proyectos.model_materials_list_manager,materials.list,dis_mc_proyectos.model_materials_list,dis_mc_proyectos.group_mc_proyectos,1,1,1,1
+dis_mc_proyectos.model_materials_list_line_manager,materials.list.line,dis_mc_proyectos.model_materials_list_line,dis_mc_proyectos.group_mc_proyectos,1,1,1,1
+dis_mc_proyectos.model_sale_order_materials_line_manager,sale.order.materials.line,dis_mc_proyectos.model_sale_order_materials_line,dis_mc_proyectos.group_mc_proyectos,1,1,1,1

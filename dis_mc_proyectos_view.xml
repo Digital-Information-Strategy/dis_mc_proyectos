@@ -1,0 +1,272 @@
+<?xml version="1.0"?>
+<openerp>
+	<data>
+	<record id="view_mc_proyectos_materials_form" model="ir.ui.view">
+	    <field name="name">Lista de Materiales</field>
+	    <field name="model">materials.list</field>
+	    <field name="type">form</field>
+	    <field name="arch" type="xml">
+	    	<form string="Lista de Materiales" version="7.0">
+	    		<sheet>
+	    		<center>
+	    		<h3><b>Lista de Materiales</b></h3>
+	    		</center>
+	    			<group name="encabezado" col="4">
+	    				<field name="name"/>
+	    				<field name="product_id"/>
+	    				<field name="altura"/>
+	    			</group>
+	    			<notebook colspan="4">
+	    				<page string="Materiales"> 	
+		    				<field name="materials_lines">
+		    					<tree string="Materiales">
+				    				<field name="sequence"/>
+			    					<field name="product_id" on_change="onchange_product_id(product_id)"/>
+			    					<field name="product_uom_id"/>
+		                        	<field name="codigo_python_cant"/>
+		    					</tree>
+	    					</field>
+	    				</page>
+	    			</notebook>
+	    		</sheet>
+	    	</form>
+	    </field>
+    </record>
+    
+    <record id="view_materials_list_line_form" model="ir.ui.view">
+	    <field name="name">Lineas de Lista de Materiales</field>
+	    <field name="model">materials.list.line</field>
+	    <field name="type">form</field>
+	    <field name="arch" type="xml">
+	    	<form string="Líneas de Lista de Materiales" version="7.0">
+	    		<sheet>
+	    			<group name="encabezado" col="4">
+	    				<field name="product_id" on_change="onchange_product_id(product_id)"/>
+						<field name="sequence"/>
+    					<field name="product_uom_id"/>
+		    		</group>
+		    		<notebook>
+			    		<page string="Formula">
+	                        <group>
+		                        <field name="codigo_python_cant"/>
+		                    </group>
+		                     <group col="3" string="Notas">
+	                            <group>
+	                               	<label colspan="2" string="Se utilizará de modo producto.REFERENCIA"/>
+	                               	<label colspan="2" string="El resultado cae en la variable result"/>
+	                               	<label colspan="2" string="Ejemplo: result=producto.A+producto.B"/>
+	                            </group>
+	                            <group>
+	                                <label colspan="2" string="Operadores utilizables:"/>
+	                                <label colspan="2" string="Suma +"/>
+	                                <label colspan="2" string="Resta -"/>
+	                                <label colspan="2" string="Multiplicacion *"/>
+	                                <label colspan="2" string="Division /"/>
+	                                <label colspan="2" string="redondeo round(numero)"/>
+	                                <label colspan="2" string="redondeo arriba math.ceil(numero)"/>
+	                                <label colspan="2" string="Tambien se utilizan otros operadores y funciones de python"/>
+	                            </group>
+	                            <group>
+	                            	<label colspan="2" string="Variables inicializadas:"/>
+	                                <label colspan="2" string="cantidad_metros(float)"/>
+									<label colspan="2" string="altura_cerca(float)"/>
+									<label colspan="2" string="intalado_sobre(char)"/>
+									<label colspan="2" string="tacos_tubo(boolean)"/>
+									<label colspan="2" string="separacion_vertical(float)"/>
+									<label colspan="2" string="arriostre(boolean)"/>
+									<label colspan="2" string="separacion_arriostre(float)"/>
+									<label colspan="2" string="cantidad_cacheras(float)"/>
+									<label colspan="2" string="alambre_navaja(float)"/>
+									<label colspan="2" string="alambre_pua(float)"/>
+									<label colspan="2" string="pintura(boolean)"/>
+									<label colspan="2" string="pintura(tubo_horizontal)"/>
+									<label colspan="2" string="pintura(cantidad_lineas)"/>
+	                            </group>
+	                            
+	           					
+	                        </group>
+	                    </page>
+	            	</notebook>
+	    		</sheet>
+	    	</form>
+	    </field>
+    </record>
+    
+    <record id="view_mc_proyectos_materials_tree" model="ir.ui.view">
+	    <field name="name">Lista de Materiales</field>
+	    <field name="model">materials.list</field>
+	    <field name="arch" type="xml">
+	    	<tree string="Materiales">
+	    		<field name="name"/>
+	    		<field name="product_id"/>
+	    	</tree>
+	    </field>
+    </record>
+    
+	<record id="action_mc_proyect_materials" model="ir.actions.act_window">
+	    <field name="name">Lista de Materiales</field>
+	    <field name="res_model">materials.list</field>
+	    <field name="view_type">form</field>
+	    <field name="view_mode">tree,form</field>
+	    <field name="view_id" ref="view_mc_proyectos_materials_tree"/>
+    </record>
+    
+    <menuitem id="menu_materials_list2" name="Lista de Materiales" sequence="6" parent="stock.menu_stock_root"/>
+	<menuitem id="menu_materials_list3" name="Lista de Materiales" sequence="0" parent="menu_materials_list2" action="action_mc_proyect_materials"/>
+    
+	<record model="ir.ui.view" id="view_form_mc_proyectos">
+			<field name="name">project.project_form_mc_proyectos</field>
+			<field name="model">project.project</field>
+			<field name="type">form</field>
+			<field name="inherit_id" ref="project.edit_project"/>
+			<field name="arch" type="xml">
+				<xpath expr="//field[@name='currency_id']" position="replace">
+					<field name="currency_id" groups="base.group_multi_currency" required="1" invisible="1"/>
+					<field name="currency_id2" attrs="{'readonly':[('state','not in',('draft','open','template'))]}"/>
+				</xpath>
+				<xpath expr="//page[@name='team']" position="after">
+                    <page string="Bitácora de Costos">
+                        <field name="bitacora" readonly="1">
+                           	<tree string="Bitácora" editable="bottom">
+					    		<field name="name"/>
+					    		<field name="monto"/>
+					    		<field name="currency_id"/>
+				    		</tree>
+				    	</field>
+                    </page>
+                    <page string="Presupuesto">
+                    	<group>
+	                        <field name="precio_venta" readonly="1"/>
+	                        <field name="costos" readonly="1"/>
+	                        <field name="utilidad" readonly="1"/>
+	                    </group>
+                    </page>
+                </xpath>
+			</field>
+	</record>
+	
+	<record id="view_mc_order_materials_list_form" model="ir.ui.view">
+	    <field name="name">Lista de Materiales</field>
+	    <field name="model">sale.order.materials.line</field>
+	    <field name="type">form</field>
+	    <field name="arch" type="xml">
+	    	<form string="Lista de Materiales" version="7.0">
+	    		<sheet>
+	    			<group name="encabezado" col="4">
+						<field name="materials_list_id" />
+						<field name="cerca_id" domain="[('check_cerca','=',True)]"/>
+			    		<field name="cantidad_metros"/>
+			    		<field name="altura_cerca"/>
+			    		<field name="instalado_sobre"/>
+			    		<field name="pintura"/>
+						<hr colspan="4"/>
+			    		<field name="tubo_vertical_id" domain="[('check_vertical','=',True)]"/>
+			    		<field name="tacos_tubo"/>
+			    		<field name="separacion_vertical"/>
+			    		<hr colspan="4"/>
+			    		<field name="tubo_horizontal"/>
+			    		<field name="tubo_horizontal_id" domain="[('check_horizontal','=',True)]" attrs="{'readonly':[('tubo_horizontal_check', '&lt;&gt;', True)]}"/>
+			    		<field name="cantidad_metros" attrs="{'readonly':[('tubo_horizontal_check','&lt;&gt;',True)]}"/>
+			    		<hr colspan="4"/>
+			    		<field name="arriostre"/>
+			    		<field name="tubo_arriostre_id" domain="[('check_arriostre','=',True)]" attrs="{'readonly':[('arriostre', '&lt;&gt;', True)]}"/>
+			    		<field name="separacion_arriostre" attrs="{'readonly':[('arriostre','&lt;&gt;',True)]}"/>
+			    		<hr colspan="4"/>
+			    		<field name="cantidad_cacheras"/>
+			    		<field name="alambre_navaja"/>
+			    		<field name="alambre_pua"/>
+			    		
+		    		</group>
+	    		</sheet>
+	    	</form>
+	    </field>
+    </record>
+	
+	
+	<record model="ir.ui.view" id="view_order_form_mc_proyectos">
+			<field name="name">sale_order_form_mc_proyectos</field>
+			<field name="model">sale.order</field>
+			<field name="type">form</field>
+			<field name="inherit_id" ref="sale.view_order_form"/>
+			<field name="arch" type="xml">
+				<xpath expr="//page[@string='Order Lines']" position="before">
+                    <page string="Lista de Materiales">
+						<button name="btn_cargar" string="Cargar" class="oe_highlight" type="object" attrs="{'invisible':[('state','&lt;&gt;','draft')]}" context="{'sale_materials_list_line':sale_materials_list_line}"/>
+                        <field name="sale_materials_list_line" attrs="{'readonly':[('state','&lt;&gt;','draft')]}">
+                           	<tree string="Lista de Materiales">
+					    		<field name="materials_list_id"/>
+					    		<field name="cantidad_metros"/>
+				    		</tree>
+				    	</field>
+                    </page>
+                </xpath>
+                <xpath expr="//page[@string='Other Information']" position="before">
+                    <page string="Líneas de Costo">
+                    <button name="btn_limpiar_lineas" string="Quitar lineas" type="object" icon="STOCK_DIALOG_ERROR" class="oe_inline"/>
+                        <field name="sale_cost_list_line" readonly="0">
+                           	<tree string="Lista de Materiales" editable="bottom">
+					    		<field name="product_id"/>
+					    		<field name="name"/>
+					    		<field name="state" invisible="1"/>
+					    		<field name="product_uom_qty"/>
+					    		<field name="tax_id" widget="many2many_tags"/>
+					    		<field name="price_unit"/>
+					    		<field name="discount"/>
+					    		<field name="price_subtotal"/>
+				    		</tree>
+				    	</field>
+				    	<group class="oe_subtotal_footer oe_right" colspan="2" name="sale_cost_total">
+                                <field name="cost_tpa" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                <field name="cost_tps" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                <field name="cost_utilidad" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                <b><label for="amount_tax"/></b>
+                                <field name="amount_tax" nolabel="1" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                <field name="cost_total_gravado" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                <field name="cost_total_excento" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                <div class="oe_subtotal_footer_separator oe_inline">
+                                    <label for="cost_total"/>
+                                    <button name="button_dummy" states="draft,sent" string="(update)" type="object" class="oe_edit_only oe_link"/>
+                                </div>
+                                <field name="cost_total" nolabel="1" class="oe_subtotal_footer_separator" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                        </group>
+                        <div class="oe_clear"/>
+                    </page>
+                </xpath>
+                <xpath expr="//field[@name='invoiced']" position="after">
+                	<field name="genera_proyecto" attrs="{'readonly':[('proyecto','&lt;&gt;',False)]}"/>
+                	<field name="proyecto" attrs="{'invisible':[('genera_proyecto','=',False)]}" readonly="1"/>
+                </xpath>
+			</field>
+	</record>
+	
+	<record model="ir.ui.view" id="invoice_supplier_form_mc_proyectos">
+			<field name="name">sale_order_form_mc_proyectos</field>
+			<field name="model">account.invoice</field>
+			<field name="type">form</field>
+			<field name="inherit_id" ref="account.invoice_supplier_form"/>
+			<field name="arch" type="xml">
+                <xpath expr="//field[@name='invoice_line']/tree/field[@name='name']" position="after">
+                	<field name="project_id" domain="[('state','in',('draft','open'))]"/>
+                </xpath>
+			</field>
+	</record>
+	
+	<record model="ir.ui.view" id="product_normal_form_view_inherit_project">
+			<field name="name">product.normal.form</field>
+			<field name="model">product.product</field>
+			<field name="type">form</field>
+			<field name="inherit_id" ref="product.product_normal_form_view"/>
+			<field name="arch" type="xml">
+                <xpath expr="//page[@string='Information']/group" position="after">
+                	<group string="Tipo en lista de materiales">
+	                	<field name="check_cerca"/>
+	                	<field name="check_vertical"/>
+	                	<field name="check_horizontal"/>
+	                	<field name="check_arriostre"/>
+	                </group>
+                </xpath>
+			</field>
+	</record>
+	
+	</data>
+</openerp>
