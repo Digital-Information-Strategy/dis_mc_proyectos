@@ -79,8 +79,8 @@
 									<label colspan="2" string="alambre_navaja(float)"/>
 									<label colspan="2" string="alambre_pua(float)"/>
 									<label colspan="2" string="pintura(boolean)"/>
-									<label colspan="2" string="pintura(tubo_horizontal)"/>
-									<label colspan="2" string="pintura(cantidad_lineas)"/>
+									<label colspan="2" string="tubo_horizontal(boolean)"/>
+									<label colspan="2" string="cantidad_lineas(float)"/>
 	                            </group>
 	                            
 	           					
@@ -165,8 +165,8 @@
 			    		<field name="separacion_vertical"/>
 			    		<hr colspan="4"/>
 			    		<field name="tubo_horizontal"/>
-			    		<field name="tubo_horizontal_id" domain="[('check_horizontal','=',True)]" attrs="{'readonly':[('tubo_horizontal_check', '&lt;&gt;', True)]}"/>
-			    		<field name="cantidad_metros" attrs="{'readonly':[('tubo_horizontal_check','&lt;&gt;',True)]}"/>
+			    		<field name="tubo_horizontal_id" domain="[('check_horizontal','=',True)]" attrs="{'readonly':[('tubo_horizontal', '&lt;&gt;', True)]}"/>
+			    		<field name="cantidad_metros" attrs="{'readonly':[('tubo_horizontal','&lt;&gt;',True)]}"/>
 			    		<hr colspan="4"/>
 			    		<field name="arriostre"/>
 			    		<field name="tubo_arriostre_id" domain="[('check_arriostre','=',True)]" attrs="{'readonly':[('arriostre', '&lt;&gt;', True)]}"/>
