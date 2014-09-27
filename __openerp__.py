@@ -27,7 +27,12 @@
         "website" : "http://dis.co.cr",
         "category" : "Proyectos",
         "description": """
-        * Modulo para gestion de proyectos, implementando tambien el manejo de lista de materiales en productos.
+         Modulo para gestion de proyectos, implementando tambien el manejo de lista de materiales en productos.
+         Para el correcto funcionamiento del módulo, es necesario crear los siguientes productos:
+        * CERCA
+        * TUBO_VERTICAL
+        * TUBO_HORIZONTAL
+        * TUBO_ARRIOSTRE
         """,
         "depends" : ['base','base_setup','product','sale','project'],
         "init_xml" : [ ],

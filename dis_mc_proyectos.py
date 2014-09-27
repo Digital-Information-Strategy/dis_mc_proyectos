@@ -24,6 +24,9 @@ import math
 from osv import osv, fields
 from openerp.tools.safe_eval import safe_eval as eval
 import openerp.addons.decimal_precision as dp
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 class product_product(osv.osv):
 	_inherit = 'product.product'
@@ -34,6 +37,7 @@ class product_product(osv.osv):
 		'check_vertical': fields.boolean('Tubo Vertical'),
 		'check_horizontal': fields.boolean('Tubo Horizontal'),
 		'check_arriostre': fields.boolean('Tubo Arriostre'),
+		'servicio_total': fields.boolean('Servicio Total'),
 		}
 	_sql_constraints = [
         ('default_code_uniq', 'unique (default_code)', 'La Referencia interna del producto debe ser única!'),
@@ -51,8 +55,9 @@ class materials_list(osv.osv):
 	_name = 'materials.list'
 	_columns = {
 		'name': fields.char('Nombre',required=True, unique=True),
-		'product_id': fields.many2one('product.product','Producto',required=True),
-		'altura': fields.float('Altura'),
+		'active': fields.boolean('Activo'),
+		#'product_id': fields.many2one('product.product','Producto',required=True),
+		#'altura': fields.float('Altura'),
 		'materials_lines': fields.one2many('materials.list.line','parent_id','Materiales'),
 		}
 	
@@ -91,7 +96,7 @@ class sale_order(osv.osv):
 			context = {}
 		for line in lines_obj.browse(cr, uid, conditions, context=context):
 			if line.product_id.type!='service':
-				amount=amount+line.price_subtotal
+				amount=amount+line.price_subtotal_cost
 		res[ids[0]] = amount
 		return res
 	
@@ -104,7 +109,7 @@ class sale_order(osv.osv):
 			context = {}
 		for line in lines_obj.browse(cr, uid, conditions, context=context):
 			if line.product_id.type=='service':
-				res[ids[0]] = res[ids[0]]+line.price_subtotal
+				res[ids[0]] = res[ids[0]]+line.price_subtotal_cost
 		return res
 	
 	def _amount_utilidad(self, cr, uid, ids, field_name, arg, context=None):
@@ -113,7 +118,7 @@ class sale_order(osv.osv):
 			context = {}
 		tpa = self.browse(cr, uid, ids, context=context)[0].cost_tpa
 		tps = self.browse(cr, uid, ids, context=context)[0].cost_tps
-		res[ids[0]]=(tpa*0.5)+(tps*0.5)
+		res[ids[0]]=(tpa*0.7)+(tps*0.7)
 		return res
 	
 	def _amount_gravado(self, cr, uid, ids, field_name, arg, context=None):
@@ -135,6 +140,12 @@ class sale_order(osv.osv):
 		tps = self.browse(cr, uid, ids, context=context)[0].cost_tps
 		utilidad = self.browse(cr, uid, ids, context=context)[0].cost_utilidad
 		res[ids[0]] = tps+utilidad
+		
+		sale_order_line_obj=self.pool.get('sale.order.line')
+		conditions = sale_order_line_obj.search(cr, uid, [('order_id','=',ids[0])])
+		for sale_line in sale_order_line_obj.browse(cr,uid,conditions,context=context):
+			if sale_line.product_id and sale_line.product_id.servicio_total==True:
+				sale_order_line_obj.write(cr, uid, [sale_line.id], {'price_unit': tps+utilidad},context=context)
 		return res
 	def _amount_cost_total(self, cr, uid, ids, field_name, arg, context=None):
 		#TOTAL=Total gravado+total exento+impuesto
@@ -160,7 +171,7 @@ class sale_order(osv.osv):
 		return res
 	
 	_columns = {
-		'sale_materials_list_line': fields.one2many('sale.order.materials.line','order_id','Lista de Materiales', required=True),
+		'sale_materials_list_line': fields.one2many('sale.order.materials.line','order_id','Lista de Materiales'),
 		'sale_cost_list_line': fields.one2many('sale.order.line','order_id','Líneas de Costo'),
 		'genera_proyecto': fields.boolean('Genera proyeto'),
 		'proyecto': fields.many2one('project.project','Proyecto'),
@@ -224,6 +235,7 @@ class sale_order(osv.osv):
 				cantidad_lineas=linea.cantidad_lineas
 				tubo_horizontal=linea.tubo_horizontal
 				for ml in linea.materials_list_id.materials_lines:
+					print "standarddddddddddddddddddddddddddddddddddddddddd: "+str(ml.product_id.standard_price)
 					#######################################################
 					product_obj = BrowsableObject(self.pool, cr, uid, productos_dict)
 					localdict = {
@@ -248,8 +260,8 @@ class sale_order(osv.osv):
 					#codigo=self.browse(cr, uid, ids[0], context=context).codigo_python
 					try:
 						print "EVALLLLLLLLLLLLLLLLL: "+str(eval(ml.codigo_python_cant, localdict, mode='exec', nocopy=True))
-					except:
-						raise osv.except_osv(('Error!'),("\n Existe un problema con el siguiente código python: "+str(ml.codigo_python_cant)+" del producto: "+str(ml.product_id.name) ))	
+					except Exception,e:
+						raise osv.except_osv(('Error!'),("\n Existe un problema con el siguiente código python: "+str(ml.codigo_python_cant)+" del producto: "+str(ml.product_id.name)+"\n\nError: "+str(e)))	
 					print "PRINTTTTTTTTTTTTTTTTTTTTTTTT: "+str(localdict)
 					if ml.product_id.taxes_id!=[]:
 						imp_id=[(4,ml.product_id.taxes_id[0].id)]
@@ -268,7 +280,9 @@ class sale_order(osv.osv):
 									'product_uom_qty':float(localdict['result']),
 									'product_uom':linea.cerca_id.uom_id.id,
 									'tax_id':imp_id,
-									'price_unit':linea.cerca_id.list_price,#revisar como lo hace el odoo en sale_order
+									#'price_unit':linea.cerca_id.list_price,#revisar como lo hace el odoo en sale_order
+									'price_unit':linea.cerca_id.standard_price,
+									'price_unit_cost':linea.cerca_id.standard_price,
 									})
 						self.pool.get('sale.order.line').create(cr, uid, vals, context=context)
 					elif linea.tubo_vertical_id and ml.product_id.default_code=='TUBO_VERTICAL':
@@ -283,7 +297,9 @@ class sale_order(osv.osv):
 									'product_uom_qty':float(localdict['result']),
 									'product_uom':linea.tubo_vertical_id.uom_id.id,
 									'tax_id':imp_id,
-									'price_unit':linea.tubo_vertical_id.list_price,#revisar como lo hace el odoo en sale_order
+									#'price_unit':linea.tubo_vertical_id.list_price,#revisar como lo hace el odoo en sale_order
+									'price_unit':linea.tubo_vertical_id.standard_price,
+									'price_unit_cost':linea.tubo_vertical_id.standard_price,
 									})
 						self.pool.get('sale.order.line').create(cr, uid, vals, context=context)
 					elif linea.tubo_horizontal_id and ml.product_id.default_code=='TUBO_HORIZONTAL':
@@ -298,7 +314,9 @@ class sale_order(osv.osv):
 									'product_uom_qty':float(localdict['result']),
 									'product_uom':linea.tubo_horizontal_id.uom_id.id,
 									'tax_id':imp_id,
-									'price_unit':linea.tubo_horizontal_id.list_price,#revisar como lo hace el odoo en sale_order
+									#'price_unit':linea.tubo_horizontal_id.list_price,#revisar como lo hace el odoo en sale_order
+									'price_unit':linea.tubo_horizontal_id.standard_price,
+									'price_unit_cost':linea.tubo_horizontal_id.standard_price,
 									})
 						self.pool.get('sale.order.line').create(cr, uid, vals, context=context)
 					elif linea.tubo_arriostre_id and ml.product_id.default_code=='TUBO_ARRIOSTRE':
@@ -312,17 +330,21 @@ class sale_order(osv.osv):
 									'name':linea.tubo_arriostre_id.name,
 									'product_uom_qty':float(localdict['result']),
 									'product_uom':linea.tubo_arriostre_id.uom_id.id,
-									'tax_id':imp_id,
-									'price_unit':linea.tubo_arriostre_id.list_price,#revisar como lo hace el odoo en sale_order
+									#'tax_id':imp_id,
+									#'price_unit':linea.tubo_arriostre_id.list_price,#revisar como lo hace el odoo en sale_order
+									'price_unit':linea.tubo_arriostre_id.standard_price,
+									'price_unit_cost':linea.tubo_arriostre_id.standard_price,
 									})
 						self.pool.get('sale.order.line').create(cr, uid, vals, context=context)
 					else:
 						productos_dict[ml.product_id.default_code]=localdict['result']
 						#######################################################
-						print "PRODUCTOSSSSSSSSS_DICTTTT: "+str(productos_dict)
 						vals={}
 						cost_vals={}
 						#print "PRINT: "+str(ml.product_id.taxes_id[0].id)
+						precio_unidad=0
+						if ml.product_id.type!="service":
+							precio_unidad=ml.product_id.standard_price
 						vals.update({
 									'order_id':ids[0],
 									'product_id':ml.product_id.id,
@@ -330,9 +352,24 @@ class sale_order(osv.osv):
 									'product_uom_qty':float(localdict['result']),
 									'product_uom':ml.product_id.uom_id.id,
 									'tax_id':imp_id,
-									'price_unit':ml.product_id.list_price,#revisar como lo hace el odoo en sale_order
+									#'price_unit':ml.product_id.list_price,#revisar como lo hace el odoo en sale_order
+									'price_unit':precio_unidad,
+									'price_unit_cost':ml.product_id.standard_price,
 									})
 						self.pool.get('sale.order.line').create(cr, uid, vals, context=context)
+				if linea.servicio_total_id:
+					vals.update({
+									'order_id':ids[0],
+									'product_id':linea.servicio_total_id.id,
+									'name':linea.servicio_total_id.name,
+									'product_uom_qty':1,
+									'product_uom':linea.servicio_total_id.uom_id.id,
+									'tax_id':imp_id,
+									#'price_unit':ml.product_id.list_price,#revisar como lo hace el odoo en sale_order
+									'price_unit': 0,
+									'price_unit_cost': 0,
+									})
+					self.pool.get('sale.order.line').create(cr, uid, vals, context=context)
 						
 		return True
 	
@@ -413,8 +450,10 @@ class sale_order_line(osv.osv):
 					res[line.id] = line.price_unit
 		return res
 	_columns = {
-		'price_unit_cost': fields.function(_amount_price_unit_cost, string='Precio unidad', digits_compute= dp.get_precision('Product Price')),
-		'price_subtotal_cost': fields.function(_amount_line_cost, string='Subtotal1', digits_compute= dp.get_precision('Account')),
+		#'price_unit_cost': fields.function(_amount_price_unit_cost, string='Precio unidad', digits_compute= dp.get_precision('Product Price')),
+		'price_unit_cost': fields.float('Precio unidad Cost', digits_compute= dp.get_precision('Product Price')),
+		#'price_unit_cost': fields.function(_amount_price_unit_cost, string='Precio unidad', digits_compute= dp.get_precision('Product Price')),
+		'price_subtotal_cost': fields.function(_amount_line_cost, string='Subtotal Cost', digits_compute= dp.get_precision('Account')),
 		}
 sale_order_line()
 class sale_order_materials_line(osv.osv):
@@ -436,10 +475,13 @@ class sale_order_materials_line(osv.osv):
 		'arriostre': fields.boolean('Arriostre'),
 		'tubo_arriostre_id': fields.many2one('product.product','Tubo Arriostre'),
 		'separacion_arriostre': fields.float('Separación Arriostre'),
+		'cacheras': fields.boolean('Cacheras'),
 		'cantidad_cacheras': fields.float('Cantidad cacheras'),
 		'alambre_navaja': fields.float('Alambre navaja'),
 		'alambre_pua': fields.float('Alambre púa'),
 		'pintura': fields.boolean('Pintura'),
+		'servicio_total_id': fields.many2one('product.product','Servicio Total'),
+		
 		#posiblemente requiera que salgan los monto en esta seccion tambien
 		#pero se pensó poner en la vista formulario la gran mayoria de campos
 		

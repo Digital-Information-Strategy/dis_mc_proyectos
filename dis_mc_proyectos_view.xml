@@ -13,8 +13,7 @@
 	    		</center>
 	    			<group name="encabezado" col="4">
 	    				<field name="name"/>
-	    				<field name="product_id"/>
-	    				<field name="altura"/>
+	    				<field name="active"/>
 	    			</group>
 	    			<notebook colspan="4">
 	    				<page string="Materiales"> 	
@@ -65,6 +64,7 @@
 	                                <label colspan="2" string="redondeo round(numero)"/>
 	                                <label colspan="2" string="redondeo arriba math.ceil(numero)"/>
 	                                <label colspan="2" string="Tambien se utilizan otros operadores y funciones de python"/>
+	                                <label colspan="2" string="Ejemplo de if: result=44 if(arriostre==True) else 99"/>
 	                            </group>
 	                            <group>
 	                            	<label colspan="2" string="Variables inicializadas:"/>
@@ -75,6 +75,7 @@
 									<label colspan="2" string="separacion_vertical(float)"/>
 									<label colspan="2" string="arriostre(boolean)"/>
 									<label colspan="2" string="separacion_arriostre(float)"/>
+									<label colspan="2" string="cacheras(boolean)"/>
 									<label colspan="2" string="cantidad_cacheras(float)"/>
 									<label colspan="2" string="alambre_navaja(float)"/>
 									<label colspan="2" string="alambre_pua(float)"/>
@@ -98,7 +99,7 @@
 	    <field name="arch" type="xml">
 	    	<tree string="Materiales">
 	    		<field name="name"/>
-	    		<field name="product_id"/>
+	    		<field name="active"/>
 	    	</tree>
 	    </field>
     </record>
@@ -166,15 +167,18 @@
 			    		<hr colspan="4"/>
 			    		<field name="tubo_horizontal"/>
 			    		<field name="tubo_horizontal_id" domain="[('check_horizontal','=',True)]" attrs="{'readonly':[('tubo_horizontal', '&lt;&gt;', True)]}"/>
-			    		<field name="cantidad_metros" attrs="{'readonly':[('tubo_horizontal','&lt;&gt;',True)]}"/>
 			    		<hr colspan="4"/>
 			    		<field name="arriostre"/>
 			    		<field name="tubo_arriostre_id" domain="[('check_arriostre','=',True)]" attrs="{'readonly':[('arriostre', '&lt;&gt;', True)]}"/>
 			    		<field name="separacion_arriostre" attrs="{'readonly':[('arriostre','&lt;&gt;',True)]}"/>
 			    		<hr colspan="4"/>
-			    		<field name="cantidad_cacheras"/>
+			    		<field name="cacheras"/>
+			    		<field name="cantidad_cacheras" attrs="{'readonly':[('cacheras','&lt;&gt;',True)]}"/>
+			    		<hr colspan="4"/>
 			    		<field name="alambre_navaja"/>
 			    		<field name="alambre_pua"/>
+			    		<hr colspan="4"/>
+			    		<field name="servicio_total_id" domain="[('type','=','service')]"/>
 			    		
 		    		</group>
 	    		</sheet>
@@ -194,7 +198,7 @@
 						<button name="btn_cargar" string="Cargar" class="oe_highlight" type="object" attrs="{'invisible':[('state','&lt;&gt;','draft')]}" context="{'sale_materials_list_line':sale_materials_list_line}"/>
                         <field name="sale_materials_list_line" attrs="{'readonly':[('state','&lt;&gt;','draft')]}">
                            	<tree string="Lista de Materiales">
-					    		<field name="materials_list_id"/>
+					    		<field name="materials_list_id" domain="[('active','=',True)]"/>
 					    		<field name="cantidad_metros"/>
 				    		</tree>
 				    	</field>
@@ -211,8 +215,10 @@
 					    		<field name="product_uom_qty"/>
 					    		<field name="tax_id" widget="many2many_tags"/>
 					    		<field name="price_unit"/>
+					    		<field name="price_unit_cost"/>
 					    		<field name="discount"/>
 					    		<field name="price_subtotal"/>
+					    		<field name="price_subtotal_cost"/>
 				    		</tree>
 				    	</field>
 				    	<group class="oe_subtotal_footer oe_right" colspan="2" name="sale_cost_total">
@@ -262,6 +268,7 @@
 	                	<field name="check_vertical"/>
 	                	<field name="check_horizontal"/>
 	                	<field name="check_arriostre"/>
+	                	<field name="servicio_total"/>
 	                </group>
                 </xpath>
 			</field>
