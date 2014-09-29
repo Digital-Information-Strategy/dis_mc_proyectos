@@ -55,7 +55,7 @@ class materials_list(osv.osv):
 	_name = 'materials.list'
 	_columns = {
 		'name': fields.char('Nombre',required=True, unique=True),
-		'active': fields.boolean('Activo'),
+		'activo': fields.boolean('Activo'),
 		#'product_id': fields.many2one('product.product','Producto',required=True),
 		#'altura': fields.float('Altura'),
 		'materials_lines': fields.one2many('materials.list.line','parent_id','Materiales'),

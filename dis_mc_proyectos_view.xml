@@ -13,7 +13,7 @@
 	    		</center>
 	    			<group name="encabezado" col="4">
 	    				<field name="name"/>
-	    				<field name="active"/>
+	    				<field name="activo"/>
 	    			</group>
 	    			<notebook colspan="4">
 	    				<page string="Materiales"> 	
@@ -99,7 +99,7 @@
 	    <field name="arch" type="xml">
 	    	<tree string="Materiales">
 	    		<field name="name"/>
-	    		<field name="active"/>
+	    		<field name="activo"/>
 	    	</tree>
 	    </field>
     </record>
@@ -198,7 +198,7 @@
 						<button name="btn_cargar" string="Cargar" class="oe_highlight" type="object" attrs="{'invisible':[('state','&lt;&gt;','draft')]}" context="{'sale_materials_list_line':sale_materials_list_line}"/>
                         <field name="sale_materials_list_line" attrs="{'readonly':[('state','&lt;&gt;','draft')]}">
                            	<tree string="Lista de Materiales">
-					    		<field name="materials_list_id" domain="[('active','=',True)]"/>
+					    		<field name="materials_list_id" domain="[('activo','=',True)]"/>
 					    		<field name="cantidad_metros"/>
 				    		</tree>
 				    	</field>
