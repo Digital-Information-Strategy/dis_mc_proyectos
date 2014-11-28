@@ -33,6 +33,11 @@
         * TUBO_VERTICAL
         * TUBO_HORIZONTAL
         * TUBO_ARRIOSTRE
+        * MANO_OBRA
+        * TUBERIA_MARCO
+        * TUBERIA_DIAGONAL
+        * REFUERZO_HORIZONTAL
+        * TUBERIA_COLUMNAS
         """,
         "depends" : ['base','base_setup','product','sale','project'],
         "init_xml" : [ ],

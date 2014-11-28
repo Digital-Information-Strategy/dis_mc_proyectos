@@ -38,6 +38,11 @@ class product_product(osv.osv):
 		'check_horizontal': fields.boolean('Tubo Horizontal'),
 		'check_arriostre': fields.boolean('Tubo Arriostre'),
 		'servicio_total': fields.boolean('Servicio Total'),
+		'mano_obra': fields.boolean('Mano de obra'),
+		'check_tuberia_marco': fields.boolean('Tuberia Marco'),
+		'check_tuberia_diagonal': fields.boolean('Tuberia Diagonal'),
+		'check_refuerzo_horizontal': fields.boolean('Refuerzo Horizontal'),
+		'check_tuberia_columnas': fields.boolean('Tuberia Columnas'),
 		}
 	_sql_constraints = [
         ('default_code_uniq', 'unique (default_code)', 'La Referencia interna del producto debe ser única!'),
@@ -55,7 +60,7 @@ class materials_list(osv.osv):
 	_name = 'materials.list'
 	_columns = {
 		'name': fields.char('Nombre',required=True, unique=True),
-		'activo': fields.boolean('Activo'),
+		'active': fields.boolean('Activo'),
 		#'product_id': fields.many2one('product.product','Producto',required=True),
 		#'altura': fields.float('Altura'),
 		'materials_lines': fields.one2many('materials.list.line','parent_id','Materiales'),
@@ -78,6 +83,8 @@ class materials_list_line(osv.osv):
 		}
 	
 	def onchange_product_id(self, cr, uid, ids, product_id, context=None):
+		if not product_id:
+			return True
 		model_data=self.pool.get('product.product').browse(cr, uid, product_id, context=context)
 		product_uom_id=model_data.uom_id.id
 		return {'value': {'product_uom_id':float(product_uom_id)}}
@@ -192,9 +199,10 @@ class sale_order(osv.osv):
 			bom.unlink(cr, uid, list_ids, context=None)
 			print list_ids
 		return True
-	
+	#PARA LOS CAMPOS RELACIONADOS COMO EL TUBO_VERTICAL SE DEBE CREAR UN IF
+	#PERO PARA LOS CAMPOS COMO CANTIDADDE METROS(FLOAT) O ARRIOSTRE(BOOLEAN) SE DEBEN MAPEAR EN LOCALDICT
 	def btn_cargar(self, cr, uid, ids, context=None):
-		
+
 		class BrowsableObject(object):
 			def __init__(self, pool, cr, uid, dict):
 				self.pool = pool
@@ -230,10 +238,20 @@ class sale_order(osv.osv):
 				instalado_sobre=linea.instalado_sobre
 				tacos_tubo=linea.tacos_tubo
 				arriostre=linea.arriostre
+				cacheras=linea.cacheras
 				cantidad_cacheras=linea.cantidad_cacheras
 				pintura=linea.pintura
 				cantidad_lineas=linea.cantidad_lineas
-				tubo_horizontal=linea.tubo_horizontal
+				#ADICIONALES
+				ancho_porton=linea.ancho_porton
+				altura_porton=linea.altura_porton
+				tipo_porton=linea.tipo_porton
+				tuberia_diagonal=linea.tuberia_diagonal
+				cantidad_diagonales=linea.cantidad_diagonales
+				refuerzo_horizontal=linea.refuerzo_horizontal
+				cantidad_refuerzos_horizontales=linea.cantidad_refuerzos_horizontales
+				cantidad_hojas=linea.cantidad_hojas
+				tensores=linea.tensores
 				for ml in linea.materials_list_id.materials_lines:
 					print "standarddddddddddddddddddddddddddddddddddddddddd: "+str(ml.product_id.standard_price)
 					#######################################################
@@ -242,17 +260,26 @@ class sale_order(osv.osv):
 								'producto': product_obj, 
 								'cantidad_metros': cantidad_metros, 
 								'altura_cerca': altura_cerca,
-								'intalado_sobre': instalado_sobre,
+								'instalado_sobre': instalado_sobre,
 								'tacos_tubo': tacos_tubo,
-								'separacion_vertical': separacion_vertical, 
+								'separacion_vertical': separacion_vertical,
 								'arriostre': arriostre,
 								'separacion_arriostre': separacion_arriostre,
+								'cacheras': cacheras,
 								'cantidad_cacheras': cantidad_cacheras,
-								'alambre_navaja':alambre_navaja,
-								'alambre_pua':alambre_pua,
+								'alambre_navaja': alambre_navaja,
+								'alambre_pua': alambre_pua,
 								'pintura': pintura,
-								'tubo_horizontal': tubo_horizontal,
 								'cantidad_lineas': cantidad_lineas,
+								'ancho_porton': ancho_porton,
+								'altura_porton': altura_porton,
+								'tipo_porton': tipo_porton,
+								'tuberia_diagonal': tuberia_diagonal,
+								'cantidad_diagonales': cantidad_diagonales,
+								'refuerzo_horizontal': refuerzo_horizontal,
+								'cantidad_refuerzos_horizontales': cantidad_refuerzos_horizontales,
+								'cantidad_hojas': cantidad_hojas,
+								'tensores': tensores,
 								'result':None,
 								'math': math,
 								}
@@ -334,6 +361,91 @@ class sale_order(osv.osv):
 									#'price_unit':linea.tubo_arriostre_id.list_price,#revisar como lo hace el odoo en sale_order
 									'price_unit':linea.tubo_arriostre_id.standard_price,
 									'price_unit_cost':linea.tubo_arriostre_id.standard_price,
+									})
+						self.pool.get('sale.order.line').create(cr, uid, vals, context=context)
+					elif linea.mano_obra_id and ml.product_id.default_code=='MANO_OBRA':
+						productos_dict[ml.product_id.default_code]=localdict['result']
+						vals={}
+						cost_vals={}
+						#print "PRINT: "+str(ml.product_id.taxes_id[0].id)
+						vals.update({
+									'order_id':ids[0],
+									'product_id':linea.mano_obra_id.id,
+									'name':linea.mano_obra_id.name,
+									'product_uom_qty':float(localdict['result']),
+									'product_uom':linea.mano_obra_id.uom_id.id,
+									#'tax_id':imp_id,
+									#'price_unit':linea.tubo_arriostre_id.list_price,#revisar como lo hace el odoo en sale_order
+									'price_unit':linea.mano_obra_id.standard_price,
+									'price_unit_cost':linea.mano_obra_id.standard_price,
+									})
+						self.pool.get('sale.order.line').create(cr, uid, vals, context=context)
+					elif linea.tuberia_marco_id and ml.product_id.default_code=='TUBERIA_MARCO':
+						productos_dict[ml.product_id.default_code]=localdict['result']
+						vals={}
+						cost_vals={}
+						#print "PRINT: "+str(ml.product_id.taxes_id[0].id)
+						vals.update({
+									'order_id':ids[0],
+									'product_id':linea.tuberia_marco_id.id,
+									'name':linea.tuberia_marco_id.name,
+									'product_uom_qty':float(localdict['result']),
+									'product_uom':linea.tuberia_marco_id.uom_id.id,
+									#'tax_id':imp_id,
+									#'price_unit':linea.tubo_arriostre_id.list_price,#revisar como lo hace el odoo en sale_order
+									'price_unit':linea.tuberia_marco_id.standard_price,
+									'price_unit_cost':linea.tuberia_marco_id.standard_price,
+									})
+						self.pool.get('sale.order.line').create(cr, uid, vals, context=context)
+					elif linea.tuberia_diagonal_id and ml.product_id.default_code=='TUBERIA_DIAGONAL':
+						productos_dict[ml.product_id.default_code]=localdict['result']
+						vals={}
+						cost_vals={}
+						#print "PRINT: "+str(ml.product_id.taxes_id[0].id)
+						vals.update({
+									'order_id':ids[0],
+									'product_id':linea.tuberia_diagonal_id.id,
+									'name':linea.tuberia_diagonal_id.name,
+									'product_uom_qty':float(localdict['result']),
+									'product_uom':linea.tuberia_diagonal_id.uom_id.id,
+									#'tax_id':imp_id,
+									#'price_unit':linea.tubo_arriostre_id.list_price,#revisar como lo hace el odoo en sale_order
+									'price_unit':linea.tuberia_diagonal_id.standard_price,
+									'price_unit_cost':linea.tuberia_diagonal_id.standard_price,
+									})
+						self.pool.get('sale.order.line').create(cr, uid, vals, context=context)
+					elif linea.refuerzo_horizontal_id and ml.product_id.default_code=='REFUERZO_HORIZONTAL':
+						productos_dict[ml.product_id.default_code]=localdict['result']
+						vals={}
+						cost_vals={}
+						#print "PRINT: "+str(ml.product_id.taxes_id[0].id)
+						vals.update({
+									'order_id':ids[0],
+									'product_id':linea.refuerzo_horizontal_id.id,
+									'name':linea.refuerzo_horizontal_id.name,
+									'product_uom_qty':float(localdict['result']),
+									'product_uom':linea.refuerzo_horizontal_id.uom_id.id,
+									#'tax_id':imp_id,
+									#'price_unit':linea.tubo_arriostre_id.list_price,#revisar como lo hace el odoo en sale_order
+									'price_unit':linea.refuerzo_horizontal_id.standard_price,
+									'price_unit_cost':linea.refuerzo_horizontal_id.standard_price,
+									})
+						self.pool.get('sale.order.line').create(cr, uid, vals, context=context)
+					elif linea.tuberia_columnas_id and ml.product_id.default_code=='TUBERIA_COLUMNAS':
+						productos_dict[ml.product_id.default_code]=localdict['result']
+						vals={}
+						cost_vals={}
+						#print "PRINT: "+str(ml.product_id.taxes_id[0].id)
+						vals.update({
+									'order_id':ids[0],
+									'product_id':linea.refuerzo_horizontal_id.id,
+									'name':linea.refuerzo_horizontal_id.name,
+									'product_uom_qty':float(localdict['result']),
+									'product_uom':linea.refuerzo_horizontal_id.uom_id.id,
+									#'tax_id':imp_id,
+									#'price_unit':linea.tubo_arriostre_id.list_price,#revisar como lo hace el odoo en sale_order
+									'price_unit':linea.refuerzo_horizontal_id.standard_price,
+									'price_unit_cost':linea.refuerzo_horizontal_id.standard_price,
 									})
 						self.pool.get('sale.order.line').create(cr, uid, vals, context=context)
 					else:
@@ -477,14 +589,31 @@ class sale_order_materials_line(osv.osv):
 		'separacion_arriostre': fields.float('Separación Arriostre'),
 		'cacheras': fields.boolean('Cacheras'),
 		'cantidad_cacheras': fields.float('Cantidad cacheras'),
-		'alambre_navaja': fields.float('Alambre navaja'),
-		'alambre_pua': fields.float('Alambre púa'),
+		'alambre_navaja': fields.float('Cantidad de líneas de alambre navaja'),
+		'alambre_pua': fields.float('Cantidad de líneas de alambres de púas'),
 		'pintura': fields.boolean('Pintura'),
 		'servicio_total_id': fields.many2one('product.product','Servicio Total'),
-		
+		'mano_obra_id': fields.many2one('product.product', 'Mano de obra'),
+		'type': fields.selection([('cerca','Cerca'),('porton','Portón')],'Tipo'),
+		####
+		'ancho_porton': fields.float('Ancho del portón'),
+		'altura_porton': fields.float('Altura deL portón'),
+		'tipo_porton': fields.selection([('abatir','De abatir'),('corredizo','Corredizo')],'Tipo de portón'),
+		'tuberia_marco_id': fields.many2one('product.product','Tubería del marco'),#domain tubos
+		'tuberia_diagonal': fields.boolean('Tubería diagonal'),
+		'tuberia_diagonal_id': fields.many2one('product.product','Tubería diagonal'),#domain tubos
+		'cantidad_diagonales': fields.float('Cantidad de diagonales'),
+		'refuerzo_horizontal': fields.boolean('Tubería refuerzo horizontal'),
+		'refuerzo_horizontal_id': fields.many2one('product.product','Tubería refuerzo horizontal'),#domain tubos
+		'cantidad_refuerzos_horizontales': fields.float('Cantidad de refuerzos horizontales'),
+		'cantidad_hojas': fields.integer('Cantidad de hojas'),
+		'tensores': fields.boolean('Tensores'),
+		'tuberia_columnas_id': fields.many2one('product.product','Tubería de las columnas'),#domain tubos
 		#posiblemente requiera que salgan los monto en esta seccion tambien
 		#pero se pensó poner en la vista formulario la gran mayoria de campos
-		
+		}
+	_defaults = {
+			'type': 'cerca',
 		}
 	def onchange_materiales(self, cr, uid, ids, materials_list_id, quantity, context=None):#No utilizado
 		model_data=self.pool.get('materials.list.line')

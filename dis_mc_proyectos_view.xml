@@ -13,7 +13,7 @@
 	    		</center>
 	    			<group name="encabezado" col="4">
 	    				<field name="name"/>
-	    				<field name="activo"/>
+	    				<field name="active"/>
 	    			</group>
 	    			<notebook colspan="4">
 	    				<page string="Materiales"> 	
@@ -81,7 +81,15 @@
 									<label colspan="2" string="alambre_pua(float)"/>
 									<label colspan="2" string="pintura(boolean)"/>
 									<label colspan="2" string="tubo_horizontal(boolean)"/>
-									<label colspan="2" string="cantidad_lineas(float)"/>
+									<label colspan="2" string="ancho_porton(float)"/>
+									<label colspan="2" string="altura_porton(float)"/>
+									<label colspan="2" string="tipo_porton(selection(abatir, corredizo))"/>
+									<label colspan="2" string="tuberia_diagonal(boolean)"/>
+									<label colspan="2" string="cantidad_diagonales(float)"/>
+									<label colspan="2" string="refuerzo_horizontal(boolean)"/>
+									<label colspan="2" string="cantidad_refuerzos_horizontales(float)"/>
+									<label colspan="2" string="cantidad_hojas(integer)"/>
+									<label colspan="2" string="tensores(boolean)"/>
 	                            </group>
 	                            
 	           					
@@ -99,7 +107,7 @@
 	    <field name="arch" type="xml">
 	    	<tree string="Materiales">
 	    		<field name="name"/>
-	    		<field name="activo"/>
+	    		<field name="active"/>
 	    	</tree>
 	    </field>
     </record>
@@ -154,23 +162,45 @@
 	    	<form string="Lista de Materiales" version="7.0">
 	    		<sheet>
 	    			<group name="encabezado" col="4">
+						<field name="type"/>
+						<label string=""/>
+						<label string=""/>
 						<field name="materials_list_id" />
 						<field name="cerca_id" domain="[('check_cerca','=',True)]"/>
-			    		<field name="cantidad_metros"/>
-			    		<field name="altura_cerca"/>
-			    		<field name="instalado_sobre"/>
+						<field name="ancho_porton" attrs="{'invisible':[('type','=','cerca')]}"/>
+						<field name="altura_porton" attrs="{'invisible':[('type','=','cerca')]}"/>
+						<field name="tipo_porton" attrs="{'invisible':[('type','=','cerca')]}"/>
+			    		<field name="cantidad_metros" attrs="{'invisible':[('type','=','porton')]}"/>
+			    		<field name="altura_cerca" attrs="{'invisible':[('type','=','porton')]}"/>
+			    		<field name="instalado_sobre" attrs="{'invisible':[('type','=','porton')]}"/>
 			    		<field name="pintura"/>
+						<field name="cantidad_hojas" attrs="{'invisible':[('type','=','cerca')]}"/>
+						<field name="tensores" attrs="{'invisible':[('type','=','cerca')]}"/>
 						<hr colspan="4"/>
-			    		<field name="tubo_vertical_id" domain="[('check_vertical','=',True)]"/>
+						<field name="tuberia_columnas_id" domain="[('check_tuberia_columnas','=',True)]"
+							   attrs="{'invisible':[('type','=','cerca')]}"/>
+			    		<field name="tubo_vertical_id" domain="[('check_vertical','=',True)]" attrs="{'invisible':[('type','=','porton')]}"/>
 			    		<field name="tacos_tubo"/>
-			    		<field name="separacion_vertical"/>
+			    		<field name="separacion_vertical" attrs="{'invisible':[('type','=','porton')]}"/>
 			    		<hr colspan="4"/>
+						<field name="tuberia_marco_id" domain="[('check_tuberia_marco','=',True)]"
+							   attrs="{'invisible':[('type','=','cerca')]}"/>
 			    		<field name="tubo_horizontal"/>
 			    		<field name="tubo_horizontal_id" domain="[('check_horizontal','=',True)]" attrs="{'readonly':[('tubo_horizontal', '&lt;&gt;', True)]}"/>
 			    		<hr colspan="4"/>
-			    		<field name="arriostre"/>
-			    		<field name="tubo_arriostre_id" domain="[('check_arriostre','=',True)]" attrs="{'readonly':[('arriostre', '&lt;&gt;', True)]}"/>
-			    		<field name="separacion_arriostre" attrs="{'readonly':[('arriostre','&lt;&gt;',True)]}"/>
+						<field name="tuberia_diagonal" attrs="{'invisible':[('type','=','cerca')]}"/>
+						<field name="tuberia_diagonal_id" domain="[('check_tuberia_diagonal','=',True)]"
+							   attrs="{'invisible':[('type','=','cerca')],'readonly':[('tuberia_diagonal','&lt;&gt;',True)]}"/>
+						<field name="cantidad_diagonales" attrs="{'invisible':[('type','=','cerca')],'readonly':[('tuberia_diagonal','&lt;&gt;',True)]}"/>
+						<field name="refuerzo_horizontal" attrs="{'invisible':[('type','=','cerca')]}"/>
+						<field name="refuerzo_horizontal_id" domain="[('check_refuerzo_horizontal','=',True)]"
+							   attrs="{'invisible':[('type','=','cerca')],'readonly':[('refuerzo_horizontal','&lt;&gt;',True)]}"/>
+						<field name="cantidad_refuerzos_horizontales"
+							   attrs="{'invisible':[('type','=','cerca')],'readonly':[('refuerzo_horizontal','&lt;&gt;',True)]}"/>
+			    		<field name="arriostre" attrs="{'invisible':[('type','=','porton')]}"/>
+			    		<field name="tubo_arriostre_id" domain="[('check_arriostre','=',True)]"
+							   attrs="{'readonly':[('arriostre', '&lt;&gt;', True)],'invisible':[('type','=','porton')]}"/>
+			    		<field name="separacion_arriostre" attrs="{'readonly':[('arriostre','&lt;&gt;',True)],'invisible':[('type','=','porton')]}"/>
 			    		<hr colspan="4"/>
 			    		<field name="cacheras"/>
 			    		<field name="cantidad_cacheras" attrs="{'readonly':[('cacheras','&lt;&gt;',True)]}"/>
@@ -178,7 +208,8 @@
 			    		<field name="alambre_navaja"/>
 			    		<field name="alambre_pua"/>
 			    		<hr colspan="4"/>
-			    		<field name="servicio_total_id" domain="[('type','=','service')]"/>
+			    		<field name="servicio_total_id" domain="[('servicio_total','=',True)]"/>
+						<field name="mano_obra_id" domain="[('mano_obra','=',True)]"/>
 			    		
 		    		</group>
 	    		</sheet>
@@ -198,7 +229,7 @@
 						<button name="btn_cargar" string="Cargar" class="oe_highlight" type="object" attrs="{'invisible':[('state','&lt;&gt;','draft')]}" context="{'sale_materials_list_line':sale_materials_list_line}"/>
                         <field name="sale_materials_list_line" attrs="{'readonly':[('state','&lt;&gt;','draft')]}">
                            	<tree string="Lista de Materiales">
-					    		<field name="materials_list_id" domain="[('activo','=',True)]"/>
+					    		<field name="materials_list_id"/>
 					    		<field name="cantidad_metros"/>
 				    		</tree>
 				    	</field>
@@ -214,10 +245,8 @@
 					    		<field name="state" invisible="1"/>
 					    		<field name="product_uom_qty"/>
 					    		<field name="tax_id" widget="many2many_tags"/>
-					    		<field name="price_unit"/>
 					    		<field name="price_unit_cost"/>
 					    		<field name="discount"/>
-					    		<field name="price_subtotal"/>
 					    		<field name="price_subtotal_cost"/>
 				    		</tree>
 				    	</field>
@@ -263,12 +292,21 @@
 			<field name="inherit_id" ref="product.product_normal_form_view"/>
 			<field name="arch" type="xml">
                 <xpath expr="//page[@string='Information']/group" position="after">
-                	<group string="Tipo en lista de materiales">
-	                	<field name="check_cerca"/>
-	                	<field name="check_vertical"/>
-	                	<field name="check_horizontal"/>
-	                	<field name="check_arriostre"/>
-	                	<field name="servicio_total"/>
+                	<group string="Tipo en lista de materiales" colspan="4">
+						<group>
+							<field name="check_cerca"/>
+							<field name="check_vertical"/>
+							<field name="check_horizontal"/>
+							<field name="check_arriostre"/>
+							<field name="mano_obra"/>
+						</group>
+						<group>
+							<field name="servicio_total"/>
+							<field name="check_tuberia_marco"/>
+							<field name="check_tuberia_diagonal"/>
+							<field name="check_refuerzo_horizontal"/>
+							<field name="check_tuberia_columnas"/>
+						</group>
 	                </group>
                 </xpath>
 			</field>
