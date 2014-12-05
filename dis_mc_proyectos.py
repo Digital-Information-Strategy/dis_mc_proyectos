@@ -242,6 +242,7 @@ class sale_order(osv.osv):
 				cantidad_cacheras=linea.cantidad_cacheras
 				pintura=linea.pintura
 				cantidad_lineas=linea.cantidad_lineas
+				tubo_horizontal=linea.tubo_horizontal
 				#ADICIONALES
 				ancho_porton=linea.ancho_porton
 				altura_porton=linea.altura_porton
@@ -271,6 +272,7 @@ class sale_order(osv.osv):
 								'alambre_pua': alambre_pua,
 								'pintura': pintura,
 								'cantidad_lineas': cantidad_lineas,
+								'tubo_horizontal': tubo_horizontal,
 								'ancho_porton': ancho_porton,
 								'altura_porton': altura_porton,
 								'tipo_porton': tipo_porton,
