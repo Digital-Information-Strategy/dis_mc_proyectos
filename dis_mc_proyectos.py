@@ -93,6 +93,25 @@ materials_list_line()
 
 class sale_order(osv.osv):
 	_inherit = 'sale.order'
+
+	def get_products(self, cr, uid, ids, materials_list_id, context=None):
+		lines_obj = self.pool.get('sale.order.line')
+		conditions = lines_obj.search(cr, uid, [('order_id', '=', ids[0]), ('materials_list_id','=',materials_list_id)])
+		res=0
+		for line in lines_obj.browse(cr, uid, conditions, context=context):
+			if line.product_id and line.product_id.type=="product":
+				res+=line.price_subtotal
+		return res
+
+	def get_services(self, cr, uid, ids, materials_list_id, context=None):
+		lines_obj = self.pool.get('sale.order.line')
+		conditions = lines_obj.search(cr, uid, [('order_id', '=', ids[0]), ('materials_list_id','=',materials_list_id)])
+		res=0
+		for line in lines_obj.browse(cr, uid, conditions, context=context):
+			if line.product_id and line.product_id.type=="service":
+				res+=line.price_subtotal
+		return res
+
 	def _amount_tpa(self, cr, uid, ids, field_name, arg, context=None):
 		lines_obj = self.pool.get('sale.order.line')
 		conditions = lines_obj.search(cr, uid, [('order_id', '=', ids[0])])
@@ -147,12 +166,12 @@ class sale_order(osv.osv):
 		tps = self.browse(cr, uid, ids, context=context)[0].cost_tps
 		utilidad = self.browse(cr, uid, ids, context=context)[0].cost_utilidad
 		res[ids[0]] = tps+utilidad
-		
-		sale_order_line_obj=self.pool.get('sale.order.line')
-		conditions = sale_order_line_obj.search(cr, uid, [('order_id','=',ids[0])])
-		for sale_line in sale_order_line_obj.browse(cr,uid,conditions,context=context):
-			if sale_line.product_id and sale_line.product_id.servicio_total==True:
-				sale_order_line_obj.write(cr, uid, [sale_line.id], {'price_unit': tps+utilidad},context=context)
+		#FIXME QUITAR
+		#sale_order_line_obj=self.pool.get('sale.order.line')
+		#conditions = sale_order_line_obj.search(cr, uid, [('order_id','=',ids[0])])
+		#for sale_line in sale_order_line_obj.browse(cr, uid, conditions,context=context):
+		#	if sale_line.product_id and sale_line.product_id.servicio_total==True:
+		#		sale_order_line_obj.write(cr, uid, [sale_line.id], {'price_unit': utilidad},context=context)
 		return res
 	def _amount_cost_total(self, cr, uid, ids, field_name, arg, context=None):
 		#TOTAL=Total gravado+total exento+impuesto
@@ -197,7 +216,6 @@ class sale_order(osv.osv):
 			bom=self.pool.get('sale.order.line')
 			list_ids = bom.search(cr, uid, [('order_id', '=', ids[0])])
 			bom.unlink(cr, uid, list_ids, context=None)
-			print list_ids
 		return True
 	#PARA LOS CAMPOS RELACIONADOS COMO EL TUBO_VERTICAL SE DEBE CREAR UN IF
 	#PERO PARA LOS CAMPOS COMO CANTIDADDE METROS(FLOAT) O ARRIOSTRE(BOOLEAN) SE DEBEN MAPEAR EN LOCALDICT
@@ -227,7 +245,7 @@ class sale_order(osv.osv):
 		if context.get('sale_materials_list_line'):
 			for w in context.get('sale_materials_list_line'):
 				linea=model_data=self.pool.get('sale.order.materials.line').browse(cr, uid, w[1], context=context)
-				#print "PRINT: "+str(linea.materials_list_id.name)
+				#print "print: "+str(linea.materials_list_id.name)
 				productos_dict={}
 				cantidad_metros=linea.cantidad_metros
 				separacion_vertical=linea.separacion_vertical
@@ -254,7 +272,7 @@ class sale_order(osv.osv):
 				cantidad_hojas=linea.cantidad_hojas
 				tensores=linea.tensores
 				for ml in linea.materials_list_id.materials_lines:
-					print "standarddddddddddddddddddddddddddddddddddddddddd: "+str(ml.product_id.standard_price)
+					#print "standarddddddddddddddddddddddddddddddddddddddddd: "+str(ml.product_id.standard_price)
 					#######################################################
 					product_obj = BrowsableObject(self.pool, cr, uid, productos_dict)
 					localdict = {
@@ -291,7 +309,7 @@ class sale_order(osv.osv):
 						print "EVALLLLLLLLLLLLLLLLL: "+str(eval(ml.codigo_python_cant, localdict, mode='exec', nocopy=True))
 					except Exception,e:
 						raise osv.except_osv(('Error!'),("\n Existe un problema con el siguiente código python: "+str(ml.codigo_python_cant)+" del producto: "+str(ml.product_id.name)+"\n\nError: "+str(e)))	
-					print "PRINTTTTTTTTTTTTTTTTTTTTTTTT: "+str(localdict)
+					#print "printTTTTTTTTTTTTTTTTTTTTTTT: "+str(localdict)
 					if ml.product_id.taxes_id!=[]:
 						imp_id=[(4,ml.product_id.taxes_id[0].id)]
 					else:
@@ -301,9 +319,10 @@ class sale_order(osv.osv):
 						productos_dict[ml.product_id.default_code]=localdict['result']
 						vals={}
 						cost_vals={}
-						#print "PRINT_________________________TAX: "+str(ml.product_id.taxes_id[0].id)
+						#print "print_________________________TAX: "+str(ml.product_id.taxes_id[0].id)
 						vals.update({
 									'order_id':ids[0],
+									'materials_list_id':linea.materials_list_id.id,
 									'product_id':linea.cerca_id.id,
 									'name':linea.cerca_id.name,
 									'product_uom_qty':float(localdict['result']),
@@ -318,9 +337,10 @@ class sale_order(osv.osv):
 						productos_dict[ml.product_id.default_code]=localdict['result']
 						vals={}
 						cost_vals={}
-						#print "PRINT: "+str(ml.product_id.taxes_id[0].id)
+						#print "print: "+str(ml.product_id.taxes_id[0].id)
 						vals.update({
 									'order_id':ids[0],
+									'materials_list_id':linea.materials_list_id.id,
 									'product_id':linea.tubo_vertical_id.id,
 									'name':linea.tubo_vertical_id.name,
 									'product_uom_qty':float(localdict['result']),
@@ -335,9 +355,10 @@ class sale_order(osv.osv):
 						productos_dict[ml.product_id.default_code]=localdict['result']
 						vals={}
 						cost_vals={}
-						#print "PRINT: "+str(ml.product_id.taxes_id[0].id)
+						#print "print: "+str(ml.product_id.taxes_id[0].id)
 						vals.update({
 									'order_id':ids[0],
+									'materials_list_id':linea.materials_list_id.id,
 									'product_id':linea.tubo_horizontal_id.id,
 									'name':linea.tubo_horizontal_id.name,
 									'product_uom_qty':float(localdict['result']),
@@ -352,9 +373,10 @@ class sale_order(osv.osv):
 						productos_dict[ml.product_id.default_code]=localdict['result']
 						vals={}
 						cost_vals={}
-						#print "PRINT: "+str(ml.product_id.taxes_id[0].id)
+						#print "print: "+str(ml.product_id.taxes_id[0].id)
 						vals.update({
 									'order_id':ids[0],
+									'materials_list_id':linea.materials_list_id.id,
 									'product_id':linea.tubo_arriostre_id.id,
 									'name':linea.tubo_arriostre_id.name,
 									'product_uom_qty':float(localdict['result']),
@@ -369,9 +391,10 @@ class sale_order(osv.osv):
 						productos_dict[ml.product_id.default_code]=localdict['result']
 						vals={}
 						cost_vals={}
-						#print "PRINT: "+str(ml.product_id.taxes_id[0].id)
+						#print "print: "+str(ml.product_id.taxes_id[0].id)
 						vals.update({
 									'order_id':ids[0],
+									'materials_list_id':linea.materials_list_id.id,
 									'product_id':linea.mano_obra_id.id,
 									'name':linea.mano_obra_id.name,
 									'product_uom_qty':float(localdict['result']),
@@ -386,9 +409,10 @@ class sale_order(osv.osv):
 						productos_dict[ml.product_id.default_code]=localdict['result']
 						vals={}
 						cost_vals={}
-						#print "PRINT: "+str(ml.product_id.taxes_id[0].id)
+						#print "print: "+str(ml.product_id.taxes_id[0].id)
 						vals.update({
 									'order_id':ids[0],
+									'materials_list_id':linea.materials_list_id.id,
 									'product_id':linea.tuberia_marco_id.id,
 									'name':linea.tuberia_marco_id.name,
 									'product_uom_qty':float(localdict['result']),
@@ -403,9 +427,10 @@ class sale_order(osv.osv):
 						productos_dict[ml.product_id.default_code]=localdict['result']
 						vals={}
 						cost_vals={}
-						#print "PRINT: "+str(ml.product_id.taxes_id[0].id)
+						#print "print: "+str(ml.product_id.taxes_id[0].id)
 						vals.update({
 									'order_id':ids[0],
+									'materials_list_id':linea.materials_list_id.id,
 									'product_id':linea.tuberia_diagonal_id.id,
 									'name':linea.tuberia_diagonal_id.name,
 									'product_uom_qty':float(localdict['result']),
@@ -420,9 +445,10 @@ class sale_order(osv.osv):
 						productos_dict[ml.product_id.default_code]=localdict['result']
 						vals={}
 						cost_vals={}
-						#print "PRINT: "+str(ml.product_id.taxes_id[0].id)
+						#print "print: "+str(ml.product_id.taxes_id[0].id)
 						vals.update({
 									'order_id':ids[0],
+									'materials_list_id':linea.materials_list_id.id,
 									'product_id':linea.refuerzo_horizontal_id.id,
 									'name':linea.refuerzo_horizontal_id.name,
 									'product_uom_qty':float(localdict['result']),
@@ -437,9 +463,10 @@ class sale_order(osv.osv):
 						productos_dict[ml.product_id.default_code]=localdict['result']
 						vals={}
 						cost_vals={}
-						#print "PRINT: "+str(ml.product_id.taxes_id[0].id)
+						#print "print: "+str(ml.product_id.taxes_id[0].id)
 						vals.update({
 									'order_id':ids[0],
+									'materials_list_id':linea.materials_list_id.id,
 									'product_id':linea.refuerzo_horizontal_id.id,
 									'name':linea.refuerzo_horizontal_id.name,
 									'product_uom_qty':float(localdict['result']),
@@ -455,12 +482,13 @@ class sale_order(osv.osv):
 						#######################################################
 						vals={}
 						cost_vals={}
-						#print "PRINT: "+str(ml.product_id.taxes_id[0].id)
+						#print "print: "+str(ml.product_id.taxes_id[0].id)
 						precio_unidad=0
 						if ml.product_id.type!="service":
 							precio_unidad=ml.product_id.standard_price
 						vals.update({
 									'order_id':ids[0],
+									'materials_list_id':linea.materials_list_id.id,
 									'product_id':ml.product_id.id,
 									'name':ml.product_id.name,
 									'product_uom_qty':float(localdict['result']),
@@ -474,23 +502,30 @@ class sale_order(osv.osv):
 				if linea.servicio_total_id:
 					vals.update({
 									'order_id':ids[0],
+									'materials_list_id':linea.materials_list_id.id,
 									'product_id':linea.servicio_total_id.id,
 									'name':linea.servicio_total_id.name,
 									'product_uom_qty':1,
 									'product_uom':linea.servicio_total_id.uom_id.id,
-									'tax_id':imp_id,
+									#'tax_id':imp_id,
 									#'price_unit':ml.product_id.list_price,#revisar como lo hace el odoo en sale_order
 									'price_unit': 0,
 									'price_unit_cost': 0,
 									})
 					self.pool.get('sale.order.line').create(cr, uid, vals, context=context)
-						
+				utilidad = self.browse(cr, uid, ids, context=context)[0].cost_utilidad
+				sale_order_line_obj=self.pool.get('sale.order.line')
+				conditions = sale_order_line_obj.search(cr, uid, [('order_id','=',ids[0])])
+				for sale_line in sale_order_line_obj.browse(cr, uid, conditions,context=context):
+					if sale_line.product_id and sale_line.product_id.servicio_total==True:
+						sale_order_line_obj.write(cr, uid, [sale_line.id], {'price_unit': utilidad},context=context)
+
 		return True
 	
 	def action_cancel(self, cr, uid, ids, context=None):
 		res = super(sale_order, self).action_button_confirm(cr, uid, ids, context=context)
 		sale_order_obj=self.pool.get('sale.order').browse(cr, uid, ids[0], context=context)
-		print"PROYECTOOOOOOOOOOOOOOO: "+str(sale_order_obj.proyecto.id)
+		#print"PROYECTOOOOOOOOOOOOOOO: "+str(sale_order_obj.proyecto.id)
 		if sale_order_obj.proyecto:
 			#print "SIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII	"
 			self.pool.get('project.project').unlink(cr, uid, [sale_order_obj.proyecto.id], context=None)
@@ -512,7 +547,7 @@ class sale_order(osv.osv):
 						})
 			p=self.pool.get('project.project').create(cr, uid, vals, context=context)
 			self.write(cr, uid, ids, {'proyecto': p},context=context)
-			print "Project created..."
+			#print "Project created..."
 		return True
 sale_order()
 
@@ -534,7 +569,7 @@ class sale_order_line(osv.osv):
 	def _amount_price_unit_cost(self, cr, uid, ids, field_name, arg, context=None):
 		##montos de los totales de tpa y tps
 		order_id_num=self.browse(cr, uid, ids, context=context)[0].order_id.id
-		#print "PRINTTTTTTTTTTTTTTTTTTTTTTTTT: "+str(order_id_num)
+		#print "printTTTTTTTTTTTTTTTTTTTTTTTT: "+str(order_id_num)
 		lines_obj = self.pool.get('sale.order.line')
 		conditions = lines_obj.search(cr, uid, [('order_id', '=', order_id_num)])
 		amount_tpa=0
@@ -547,8 +582,8 @@ class sale_order_line(osv.osv):
 			else:
 				amount_tps=amount_tps+(line.product_uom_qty*line.product_id.standard_price)
 		#############################################
-		print "amount_tpaaaaaaaaaaaaaaaaaaaaaaaaa: "+str(amount_tpa)
-		print "amount_tpsssssssssssssssssssssssss: "+str(amount_tps)
+		#print "amount_tpaaaaaaaaaaaaaaaaaaaaaaaaa: "+str(amount_tpa)
+		#print "amount_tpsssssssssssssssssssssssss: "+str(amount_tps)
 		res = {}
 		if context is None:
 			context = {}
@@ -568,6 +603,7 @@ class sale_order_line(osv.osv):
 		'price_unit_cost': fields.float('Precio unidad Cost', digits_compute= dp.get_precision('Product Price')),
 		#'price_unit_cost': fields.function(_amount_price_unit_cost, string='Precio unidad', digits_compute= dp.get_precision('Product Price')),
 		'price_subtotal_cost': fields.function(_amount_line_cost, string='Subtotal Cost', digits_compute= dp.get_precision('Account')),
+		'materials_list_id': fields.many2one('materials.list','Lista de materiales'),
 		}
 sale_order_line()
 class sale_order_materials_line(osv.osv):
@@ -617,12 +653,13 @@ class sale_order_materials_line(osv.osv):
 	_defaults = {
 			'type': 'cerca',
 		}
-	def onchange_materiales(self, cr, uid, ids, materials_list_id, quantity, context=None):#No utilizado
+	def onchange_materiales(self, cr, uid, ids, materials_list_id, quantity, context=None):#NO SE UTILIZA
 		model_data=self.pool.get('materials.list.line')
 		conditions = model_data.search(cr, uid, [('parent_id', '=', materials_list_id)])
 		productos=model_data.browse(cr, uid, conditions, context=context)
 		for producto in productos:
-			print"PRODUCTO: "+str(producto.product_id.id)
+			pass
+			#print"PRODUCTO: "+str(producto.product_id.id)
 		return {'value': {'quantity':777}}
 sale_order_materials_line()
 
@@ -679,7 +716,7 @@ class account_invoice(osv.osv):
 							if conditions_bitacora:
 								#write bitacora
 								data_bitacora=bitacora_obj.browse(cr, uid, conditions_bitacora, context=None)[0]
-								print "DATAAAAAAAAAAAAAAAAAAAA: "+str(data_bitacora.id)
+								#print "DATAAAAAAAAAAAAAAAAAAAA: "+str(data_bitacora.id)
 								bitacora_obj.write(cr, uid, data_bitacora.id, {'monto': float(data_bitacora.monto+monto_costo) },context=context)
 								
 							else:
