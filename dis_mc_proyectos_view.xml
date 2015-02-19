@@ -19,7 +19,7 @@
 						<page string="Materiales"> 	
 							<field name="materials_lines">
 								<tree string="Materiales">
-									<field name="sequence"/>
+									<field name="sequence" invisible="1"/>
 									<field name="product_id" on_change="onchange_product_id(product_id)"/>
 									<field name="product_uom_id"/>
 									<field name="codigo_python_cant"/>
@@ -203,7 +203,7 @@
 						<field name="alambre_navaja"/>
 						<field name="alambre_pua"/>
 						<hr colspan="4"/>
-						<field name="servicio_total_id" domain="[('servicio_total','=',True)]"/>
+						<field name="servicio_total_id" required="True" domain="[('servicio_total','=',True)]"/>
 						<field name="mano_obra_id" domain="[('mano_obra','=',True)]"/>
 						
 					</group>
@@ -221,8 +221,8 @@
 			<field name="arch" type="xml">
 				<xpath expr="//page[@string='Order Lines']" position="before">
 					<page string="Lista de Materiales">
-						<button name="btn_cargar" string="Cargar" class="oe_highlight" type="object" attrs="{'invisible':[('state','&lt;&gt;','draft')]}" context="{'sale_materials_list_line':sale_materials_list_line}"/>
-						<field name="sale_materials_list_line" attrs="{'readonly':[('state','&lt;&gt;','draft')]}">
+						<button name="btn_cargar" string="Cargar" class="oe_highlight" type="object" attrs="{'invisible':[('state','not in',['draft','sent'])]}" context="{'sale_materials_list_line':sale_materials_list_line, 'partner_id':partner_id, 'pricelist_id':pricelist_id, 'date_order':date_order}"/>
+						<field name="sale_materials_list_line" attrs="{'readonly':[('state','not in',['draft','sent'])]}">
 						   	<tree string="Lista de Materiales">
 								<field name="materials_list_id"/>
 								<field name="cantidad_metros"/>
