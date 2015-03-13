@@ -165,7 +165,8 @@
 						<field name="type"/>
 						<label string=""/>
 						<label string=""/>
-						<field name="materials_list_id" />
+						<field name="materials_list_id" on_change="onchange_materiales(materials_list_id)"/>
+						<field name="description"/>
 						<field name="cerca_id" domain="[('check_cerca','=',True)]"/>
 						<field name="ancho_porton" attrs="{'invisible':[('type','=','cerca')]}"/>
 						<field name="altura_porton" attrs="{'invisible':[('type','=','cerca')]}"/>
@@ -225,6 +226,7 @@
 						<field name="sale_materials_list_line" attrs="{'readonly':[('state','not in',['draft','sent'])]}">
 						   	<tree string="Lista de Materiales">
 								<field name="materials_list_id"/>
+								<field name="description"/>
 								<field name="cantidad_metros"/>
 							</tree>
 						</field>

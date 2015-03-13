@@ -111,7 +111,7 @@ class sale_order(osv.osv):
 		conditions = lines_obj.search(cr, uid, [('order_id', '=', ids[0]), ('materials_list_id','=',materials_list_id)])
 		res=0
 		for line in lines_obj.browse(cr, uid, conditions, context=context):
-			if line.product_id and line.product_id.type=="service" and line.product_id.servicio_total==False:
+			if line.product_id and line.product_id.type=="service" and line.product_id.servicio_total!=False:
 				res+=line.price_subtotal
 		return res
 
@@ -316,7 +316,7 @@ class sale_order(osv.osv):
 						productos_dict[ml.product_id.default_code]=localdict['result']
 						vals={}
 						#print "print_________________________TAX: "+str(ml.product_id.taxes_id[0].id)
-						price_currency=self._get_price_currency( cr, uid, ids, linea.cerca_id.standard_price, ml.product_id.currency_id, context=None)
+						price_currency=self._get_price_currency( cr, uid, ids, linea.cerca_id.standard_price, linea.cerca_id.currency_id, context=None)
 						vals.update({
 									'order_id':ids[0],
 									'materials_list_id':linea.materials_list_id.id,
@@ -334,7 +334,7 @@ class sale_order(osv.osv):
 						productos_dict[ml.product_id.default_code]=localdict['result']
 						vals={}
 						#print "print: "+str(ml.product_id.taxes_id[0].id)
-						price_currency=self._get_price_currency( cr, uid, ids, linea.tubo_vertical_id.standard_price, ml.product_id.currency_id, context=None)
+						price_currency=self._get_price_currency( cr, uid, ids, linea.tubo_vertical_id.standard_price, linea.tubo_vertical_id.currency_id, context=None)
 						vals.update({
 									'order_id':ids[0],
 									'materials_list_id':linea.materials_list_id.id,
@@ -352,7 +352,7 @@ class sale_order(osv.osv):
 						productos_dict[ml.product_id.default_code]=localdict['result']
 						vals={}
 						#print "print: "+str(ml.product_id.taxes_id[0].id)
-						price_currency=self._get_price_currency( cr, uid, ids, linea.tubo_horizontal_id.standard_price, ml.product_id.currency_id, context=None)
+						price_currency=self._get_price_currency( cr, uid, ids, linea.tubo_horizontal_id.standard_price, linea.tubo_horizontal_id.currency_id, context=None)
 						vals.update({
 									'order_id':ids[0],
 									'materials_list_id':linea.materials_list_id.id,
@@ -370,7 +370,7 @@ class sale_order(osv.osv):
 						productos_dict[ml.product_id.default_code]=localdict['result']
 						vals={}
 						#print "print: "+str(ml.product_id.taxes_id[0].id)
-						price_currency=self._get_price_currency( cr, uid, ids, linea.tubo_arriostre_id.standard_price, ml.product_id.currency_id, context=None)
+						price_currency=self._get_price_currency( cr, uid, ids, linea.tubo_arriostre_id.standard_price, linea.tubo_arriostre_id.currency_id, context=None)
 						vals.update({
 									'order_id':ids[0],
 									'materials_list_id':linea.materials_list_id.id,
@@ -388,7 +388,7 @@ class sale_order(osv.osv):
 						productos_dict[ml.product_id.default_code]=localdict['result']
 						vals={}
 						#print "print: "+str(ml.product_id.taxes_id[0].id)
-						price_currency=self._get_price_currency( cr, uid, ids, linea.mano_obra_id.standard_price, ml.product_id.currency_id, context=None)
+						price_currency=self._get_price_currency( cr, uid, ids, linea.mano_obra_id.standard_price, linea.mano_obra_id.currency_id, context=None)
 						vals.update({
 									'order_id':ids[0],
 									'materials_list_id':linea.materials_list_id.id,
@@ -406,7 +406,7 @@ class sale_order(osv.osv):
 						productos_dict[ml.product_id.default_code]=localdict['result']
 						vals={}
 						#print "print: "+str(ml.product_id.taxes_id[0].id)
-						price_currency=self._get_price_currency( cr, uid, ids, linea.tuberia_marco_id.standard_price, ml.product_id.currency_id, context=None)
+						price_currency=self._get_price_currency( cr, uid, ids, linea.tuberia_marco_id.standard_price, linea.tuberia_marco_id.currency_id, context=None)
 						vals.update({
 									'order_id':ids[0],
 									'materials_list_id':linea.materials_list_id.id,
@@ -424,7 +424,7 @@ class sale_order(osv.osv):
 						productos_dict[ml.product_id.default_code]=localdict['result']
 						vals={}
 						#print "print: "+str(ml.product_id.taxes_id[0].id)
-						price_currency=self._get_price_currency( cr, uid, ids, linea.tuberia_diagonal_id.standard_price, ml.product_id.currency_id, context=None)
+						price_currency=self._get_price_currency( cr, uid, ids, linea.tuberia_diagonal_id.standard_price, linea.tuberia_diagonal_id.currency_id, context=None)
 						vals.update({
 									'order_id':ids[0],
 									'materials_list_id':linea.materials_list_id.id,
@@ -442,7 +442,7 @@ class sale_order(osv.osv):
 						productos_dict[ml.product_id.default_code]=localdict['result']
 						vals={}
 						#print "print: "+str(ml.product_id.taxes_id[0].id)
-						price_currency=self._get_price_currency( cr, uid, ids, linea.refuerzo_horizontal_id.standard_price, ml.product_id.currency_id, context=None)
+						price_currency=self._get_price_currency( cr, uid, ids, linea.refuerzo_horizontal_id.standard_price, linea.refuerzo_horizontal_id.currency_id, context=None)
 						vals.update({
 									'order_id':ids[0],
 									'materials_list_id':linea.materials_list_id.id,
@@ -460,7 +460,7 @@ class sale_order(osv.osv):
 						productos_dict[ml.product_id.default_code]=localdict['result']
 						vals={}
 						#print "print: "+str(ml.product_id.taxes_id[0].id)
-						price_currency=self._get_price_currency( cr, uid, ids, linea.refuerzo_horizontal_id.standard_price, ml.product_id.currency_id, context=None)
+						price_currency=self._get_price_currency( cr, uid, ids, linea.refuerzo_horizontal_id.standard_price, linea.tuberia_columnas_id.currency_id, context=None)
 						vals.update({
 									'order_id':ids[0],
 									'materials_list_id':linea.materials_list_id.id,
@@ -480,10 +480,10 @@ class sale_order(osv.osv):
 						vals={}
 						#print "print: "+str(ml.product_id.taxes_id[0].id)
 						precio_unidad=0
-						if ml.product_id.type!="service":
-							#TODO UTILIZAR PRICELIST PARA GENERAR EL PRECIO: CREAR METODO PARA ESTO
-							precio_unidad=ml.product_id.standard_price
-							precio_unidad=self._get_price_currency( cr, uid, ids, precio_unidad, ml.product_id.currency_id, context=None)
+						#if ml.product_id.type!="service":
+						#TODO VIERNES
+						precio_unidad=ml.product_id.standard_price
+						precio_unidad=self._get_price_currency( cr, uid, ids, precio_unidad, ml.product_id.currency_id, context=None)
 						vals.update({
 									'order_id':ids[0],
 									'materials_list_id':linea.materials_list_id.id,
@@ -498,6 +498,7 @@ class sale_order(osv.osv):
 									})
 						self.pool.get('sale.order.line').create(cr, uid, vals, context=context)
 				if linea.servicio_total_id:
+					print"IF SERVICIO TOTAL"
 					vals={}
 					vals.update({
 									'order_id':ids[0],
@@ -523,6 +524,7 @@ class sale_order(osv.osv):
 
 		return True
 	def _get_price_currency(self, cr, uid, ids, amount, product_currency, context=None):
+		print"GET_CURRENCYYYYYYYYYYYYYYYY"
 		price=0.00
 		rate=False
 		sale_order_obj=self.browse(cr, uid, ids, context=context)[0]
@@ -534,13 +536,18 @@ class sale_order(osv.osv):
 				rate=rate_obj.browse(cr, uid, conditions,context=context)[0]
 				if rate.rate!=0:
 					price=amount/(rate.rate)
+					print"DOLARES A COLONES: "+str(price)
 			else: #PASA DE COLONES A DOLARES#TODO
 				rate_obj=self.pool.get('res.currency.rate')
 				conditions = rate_obj.search(cr, uid, [('currency_id','=',sale_order_obj.pricelist_id.currency_id.id),('name','<=',date_order)],order='name desc')
 				rate=rate_obj.browse(cr, uid, conditions,context=context)[0]
 				price=amount*(rate.rate)
+				print"COLONES A DOLARES: "+str(price)
 		else:
 			price=amount
+			print"PRECIO NO CAMBIA: "+str(price)
+			print "product_currency: "+str(product_currency.name)
+			print "sale_order_currency: "+str(sale_order_obj.pricelist_id.currency_id.name)
 		return price
 	
 	def action_cancel(self, cr, uid, ids, context=None):
@@ -632,6 +639,7 @@ class sale_order_materials_line(osv.osv):
 	_columns = {
 		'order_id': fields.many2one('sale.order','Orden Padre'),
 		'materials_list_id': fields.many2one('materials.list','Lista de materiales',required=True),
+	    'description': fields.text('Descripción'),
 		'cerca_id': fields.many2one('product.product','Cerca'),
 		#'quantity': fields.float('Cantidad'),
 		'cantidad_metros': fields.float('Cantidad de Metros'),
@@ -651,7 +659,7 @@ class sale_order_materials_line(osv.osv):
 		'alambre_navaja': fields.float('Cantidad de líneas de alambre navaja'),
 		'alambre_pua': fields.float('Cantidad de líneas de alambres de púas'),
 		'pintura': fields.boolean('Pintura'),
-		'servicio_total_id': fields.many2one('product.product','Servicio Total'),
+		'servicio_total_id': fields.many2one('product.product','Servicio Total', help="Agrupa todos el monto de todos los servicios al Cargar las listas de materiales."),
 		'mano_obra_id': fields.many2one('product.product', 'Mano de obra'),
 		'type': fields.selection([('cerca','Cerca'),('porton','Portón')],'Tipo'),
 		####
@@ -674,14 +682,11 @@ class sale_order_materials_line(osv.osv):
 	_defaults = {
 			'type': 'cerca',
 		}
-	def onchange_materiales(self, cr, uid, ids, materials_list_id, quantity, context=None):#NO SE UTILIZA
-		model_data=self.pool.get('materials.list.line')
-		conditions = model_data.search(cr, uid, [('parent_id', '=', materials_list_id)])
-		productos=model_data.browse(cr, uid, conditions, context=context)
-		for producto in productos:
-			pass
-			#print"PRODUCTO: "+str(producto.product_id.id)
-		return {'value': {'quantity':777}}
+	def onchange_materiales(self, cr, uid, ids, materials_list_id, context=None):
+		if not materials_list_id:
+			return True
+		materials_line_obj=self.pool.get("materials.list").browse(cr, uid, materials_list_id, context=context)
+		return {'value': {'description':materials_line_obj.name}}
 sale_order_materials_line()
 
 
