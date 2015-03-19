@@ -111,8 +111,9 @@ class sale_order(osv.osv):
 		conditions = lines_obj.search(cr, uid, [('order_id', '=', ids[0]), ('materials_list_id','=',materials_list_id)])
 		res=0
 		for line in lines_obj.browse(cr, uid, conditions, context=context):
-			if line.product_id and line.product_id.type=="service" and line.product_id.servicio_total!=False:
+			if line.product_id and line.product_id.type=="service" and line.product_id.servicio_total==False:
 				res+=line.price_subtotal
+				print "RESSSSSSSSSSSSSSSSSSSSSS_: "+str(line.price_subtotal)+" "+str(line.name)
 		return res
 
 	def _amount_tpa(self, cr, uid, ids, field_name, arg, context=None):
@@ -209,6 +210,7 @@ class sale_order(osv.osv):
 		'cost_total': fields.function(_amount_cost_total, string='Total', digits_compute= dp.get_precision('Product Price')),
 		}
 	def btn_limpiar_lineas(self, cr, uid, ids, context=None):
+		print "BORRADO"
 		if ids!=[]:
 			bom=self.pool.get('sale.order.line')
 			list_ids = bom.search(cr, uid, [('order_id', '=', ids[0])])
@@ -217,7 +219,7 @@ class sale_order(osv.osv):
 	#PARA LOS CAMPOS RELACIONADOS COMO EL TUBO_VERTICAL SE DEBE CREAR UN IF
 	#PERO PARA LOS CAMPOS COMO CANTIDADDE METROS(FLOAT) O ARRIOSTRE(BOOLEAN) SE DEBEN MAPEAR EN LOCALDICT
 	def btn_cargar(self, cr, uid, ids, context=None):
-
+		self.btn_limpiar_lineas(cr, uid, ids, context=context)
 		class BrowsableObject(object):
 			def __init__(self, pool, cr, uid, dict):
 				self.pool = pool
@@ -516,8 +518,11 @@ class sale_order(osv.osv):
 
 				#CARGAR MONTOS EN SERVICIOS TOTALES
 				sale_order_line_obj=self.pool.get('sale.order.line')
+				#TODO APARENTA JUNTAR TODAS LAS LISTAS DE MATERIALES EN UN SOLO SERVICIO TOTAL
 				conditions = sale_order_line_obj.search(cr, uid, [('order_id','=',ids[0])])
 				for sale_line in sale_order_line_obj.browse(cr, uid, conditions,context=context):
+					print"FORRRRRRRRRRRRRRRRRRR Prodddddddddddd: "+str(self.get_products(cr, uid, ids, sale_line.materials_list_id.id, context=None))
+					print"FORRRRRRRRRRRRRRRRRRR Servvvvvvvvvvvvvvvvv: "+str(self.get_services(cr, uid, ids, sale_line.materials_list_id.id, context=None))
 					if sale_line.product_id and sale_line.product_id.servicio_total==True and sale_line.price_unit==0:
 						utilidad_x_lista=(self.get_products(cr, uid, ids, sale_line.materials_list_id.id, context=None)*0.7)+(self.get_services(cr, uid, ids, sale_line.materials_list_id.id, context=None)*0.7)
 						sale_order_line_obj.write(cr, uid, [sale_line.id], {'price_unit': utilidad_x_lista},context=context)
