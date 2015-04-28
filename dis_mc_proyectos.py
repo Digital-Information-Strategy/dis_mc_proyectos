@@ -22,6 +22,7 @@
 import time
 import math
 from osv import osv, fields
+from addons.account_voucher.invoice import invoice
 from openerp.tools.safe_eval import safe_eval as eval
 import openerp.addons.decimal_precision as dp
 import sys
@@ -644,7 +645,7 @@ class sale_order_materials_line(osv.osv):
 	_columns = {
 		'order_id': fields.many2one('sale.order','Orden Padre'),
 		'materials_list_id': fields.many2one('materials.list','Lista de materiales',required=True),
-	    'description': fields.text('Descripción'),
+		'description': fields.text('Descripción'),
 		'cerca_id': fields.many2one('product.product','Cerca'),
 		#'quantity': fields.float('Cantidad'),
 		'cantidad_metros': fields.float('Cantidad de Metros'),
@@ -700,9 +701,11 @@ class project_bitacora(osv.osv):
 	_name = 'mc.proyectos.bitacora'
 	_columns = {
 		'proyecto_id': fields.many2one('project.project', ondelete='cascade', required=True),
-		'name': fields.char('Número de documento'),
+		'name': fields.many2one('account.invoice','Número de documento', required=True),
+		'invoice_line_id': fields.many2one('account.invoice.line','Linea de factura', required=True),
 		'monto': fields.float('Monto'),
 		'currency_id': fields.many2one('res.currency','Moneda'),
+		'date_invoice':fields.date('Fecha de Factura'),
 		}
 project_bitacora()
 
@@ -713,50 +716,90 @@ class mc_project_project(osv.osv):
 		for i in self.browse(cr, uid, ids, context=context):
 			vals[i.id]=float(i.precio_venta)-float(i.costos)
 		return vals
+	def _get_costo(self, cr, uid, ids, name, args, context=None):
+		vals={}
+		total_costo=0.00
+		bitacora_obj = self.pool.get('mc.proyectos.bitacora')
+		conditions = bitacora_obj.search(cr, uid, [('proyecto_id','=',ids[0])])
+		for b in bitacora_obj.browse(cr, uid, conditions, context=context):
+			total_costo+=self._get_price_currency(cr, uid, ids, b.monto, b.currency_id, b.date_invoice)
+		for i in self.browse(cr, uid, ids, context=context):
+			vals[i.id]=float(total_costo)
+		return vals
 	_columns = {
 		'precio_venta': fields.float('Precio Venta'),
-		'costos': fields.float('Costos'),
+		'costos': fields.function(_get_costo, string='Costos',type='float', store=False),
 		'utilidad': fields.function(_get_utilidad, string='Utilidad',type='float', store=False),
 		'bitacora': fields.one2many('mc.proyectos.bitacora','proyecto_id','Bitácora'),
 		'currency_id2': fields.many2one('res.currency','Moneda', help="Moneda tomada desde el pedido de venta"),
 		}
+
+	def _get_price_currency(self, cr, uid, ids, amount, bitacora_currency, date_invoice, context=None):
+		print"GET_CURRENCYYYYYYYYYYYYYYYY Project"
+		price=0.00
+		rate=False
+		project_obj=self.browse(cr, uid, ids, context=context)[0]
+		if bitacora_currency.id!=project_obj.currency_id2.id:
+			if bitacora_currency.name=="USD": #PASA DE DOLARES A COLONES
+				rate_obj=self.pool.get('res.currency.rate')
+				conditions = rate_obj.search(cr, uid, [('currency_id','=',bitacora_currency.id),('name','<=',date_invoice)],order='name desc')
+				rate=rate_obj.browse(cr, uid, conditions,context=context)[0]
+				if rate.rate!=0:
+					price=amount/(rate.rate)
+					print"DOLARES A COLONES: "+str(price)
+			else: #PASA DE COLONES A DOLARES#TODO
+				rate_obj=self.pool.get('res.currency.rate')
+				conditions = rate_obj.search(cr, uid, [('currency_id','=',project_obj.currency_id2.id),('name','<=',date_invoice)],order='name desc')
+				rate=rate_obj.browse(cr, uid, conditions,context=context)[0]
+				price=amount*(rate.rate)
+				print"COLONES A DOLARES: "+str(price)
+		else:
+			price=amount
+			print"PRECIO NO CAMBIA: "+str(price)
+			print "project_currency: "+str(bitacora_currency.name)
+			print "project_obj_currency: "+str(project_obj.currency_id2.name)
+		return price
 mc_project_project()
 
 class account_invoice(osv.osv):
 	_inherit = 'account.invoice'
 	
 	def invoice_validate(self, cr, uid, ids, context=None):
+		res=super(account_invoice, self).invoice_validate(cr, uid, ids, context=context)
 		self.write(cr, uid, ids, {'state':'open'}, context=context)
 		invoice_line_obj = self.pool.get('account.invoice.line')
 		proyecto_obj = self.pool.get('project.project')
 		bitacora_obj = self.pool.get('mc.proyectos.bitacora')
-		monto_costo = 0.00
-		monto_bitacora = 0.00
-		data_bitacora=False
 		# Busqueda de información para las líneas de factura.
 		for invoice in self.browse(cr, uid, ids, context=None):
 			if invoice.type == 'in_invoice':
 				for ln in invoice.invoice_line:
 					for invoice_line in invoice_line_obj.browse(cr, uid, [ln.id], context=None):
-						monto_bitacora
 						monto_costo=invoice_line.price_subtotal
 						if invoice_line.project_id.id:
 							# Aumentar el monto de gasto en el proyecto.
 							data_project=proyecto_obj.browse(cr, uid, [invoice_line.project_id.id], context=None)[0]
-							conditions_bitacora = bitacora_obj.search(cr, uid, [('proyecto_id', '=',data_project.id),('name','=',invoice.internal_number)])
-							if conditions_bitacora:
+							conditions_bitacora = bitacora_obj.search(cr, uid, [('proyecto_id','=',data_project.id),('name','=',invoice.id)])
+							print "CONDITIONSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS: "+str(conditions_bitacora)
+							if conditions_bitacora:#ya existe
 								#write bitacora
 								data_bitacora=bitacora_obj.browse(cr, uid, conditions_bitacora, context=None)[0]
-								#print "DATAAAAAAAAAAAAAAAAAAAA: "+str(data_bitacora.id)
 								bitacora_obj.write(cr, uid, data_bitacora.id, {'monto': float(data_bitacora.monto+monto_costo) },context=context)
-								
 							else:
 								#create bitacora
-								bitacora_obj.create(cr, uid, {'name':invoice.internal_number ,'monto': monto_costo,'currency_id': invoice.currency_id.id, 'proyecto_id':data_project.id},context=context)
-							proyecto_obj.write(cr, uid, data_project.id, {'costos': float(data_project.costos+monto_costo) },context=context)
-
-		return True
-	
+								bitacora_obj.create(cr, uid, {'name':invoice.id, 'invoice_line_id':invoice_line.id, 'monto': monto_costo,'currency_id': invoice.currency_id.id, 'proyecto_id':data_project.id, 'date_invoice': invoice.date_invoice},context=context)
+							#proyecto_obj.write(cr, uid, data_project.id, {'costos': float(data_project.costos+costos)},context=context)
+		return res
+	def action_cancel(self, cr, uid, ids, context=None):
+		res=super(account_invoice, self).action_cancel(cr, uid, ids, context=context)
+		bitacora_obj = self.pool.get('mc.proyectos.bitacora')
+		invoice_line_obj = self.pool.get('account.invoice.line')
+		for ln in self.browse(cr, uid, ids[0], context=None).invoice_line:
+			#invoice_line = invoice_line_obj.browse(cr, uid, ids[0], context=None)
+			conditions_bitacora = bitacora_obj.search(cr, uid, [('invoice_line_id','=',ln.id)])
+			bitacora_obj.unlink(cr, uid, conditions_bitacora, context=context)
+			print "CANCELARRRRRRRRRRRRRR: "+str(conditions_bitacora)
+		return res
 account_invoice()
 
 class account_invoice_line(osv.osv):
@@ -764,5 +807,4 @@ class account_invoice_line(osv.osv):
 	_columns = {
 		'project_id': fields.many2one('project.project','Proyecto'),
 		}
-	
 account_invoice_line()

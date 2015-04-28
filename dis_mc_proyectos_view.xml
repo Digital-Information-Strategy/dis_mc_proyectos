@@ -138,6 +138,7 @@
 						<field name="bitacora" readonly="1">
 						   	<tree string="Bitácora" editable="bottom">
 								<field name="name"/>
+								<field name="date_invoice"/>
 								<field name="monto"/>
 								<field name="currency_id"/>
 							</tree>
