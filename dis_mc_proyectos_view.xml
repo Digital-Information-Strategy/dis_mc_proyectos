@@ -65,6 +65,18 @@
 									<label colspan="2" string="redondeo arriba math.ceil(numero)"/>
 									<label colspan="2" string="Tambien se utilizan otros operadores y funciones de python"/>
 									<label colspan="2" string="Ejemplo de if: result=44 if(arriostre==True) else 99"/>
+									<br/>
+									<label colspan="2" string="Productos Base:"/>
+									<label colspan="2" string="CERCA"/>
+									<label colspan="2" string="TUBO_VERTICAL"/>
+									<label colspan="2" string="TUBO_HORIZONTAL"/>
+									<label colspan="2" string="TUBO_ARRIOSTRE"/>
+									<label colspan="2" string="MANO_OBRA"/>
+									<label colspan="2" string="TUBERIA_MARCO"/>
+									<label colspan="2" string="TUBERIA_DIAGONAL"/>
+									<label colspan="2" string="REFUERZO_HORIZONTAL"/>
+									<label colspan="2" string="TUBERIA_COLUMNAS"/>
+
 								</group>
 								<group>
 									<label colspan="2" string="Variables inicializadas:"/>
@@ -91,7 +103,6 @@
 									<label colspan="2" string="cantidad_hojas(integer)"/>
 									<label colspan="2" string="tensores(boolean)"/>
 								</group>
-								
 			   					
 							</group>
 						</page>
