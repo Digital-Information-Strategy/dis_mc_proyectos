@@ -39,7 +39,7 @@
         * REFUERZO_HORIZONTAL
         * TUBERIA_COLUMNAS
         """,
-        "depends" : ['base','base_setup','product','sale','project'],
+        "depends" : ['base','base_setup','product','sale','project', 'stock'],
         "init_xml" : [ ],
         "demo_xml" : [ ],
         "data" : ['dis_mc_proyectos_view.xml', 'security/mc_proyectos_security.xml','security/ir.model.access.csv'],

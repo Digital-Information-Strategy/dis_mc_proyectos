@@ -21,8 +21,9 @@
 
 import time
 import math
+from openerp import netsvc
+from openerp.tools.translate import _
 from osv import osv, fields
-from addons.account_voucher.invoice import invoice
 from openerp.tools.safe_eval import safe_eval as eval
 import openerp.addons.decimal_precision as dp
 import sys
@@ -701,8 +702,9 @@ class project_bitacora(osv.osv):
 	_name = 'mc.proyectos.bitacora'
 	_columns = {
 		'proyecto_id': fields.many2one('project.project', ondelete='cascade', required=True),
-		'name': fields.many2one('account.invoice','Número de documento', required=True),
-		'invoice_line_id': fields.many2one('account.invoice.line','Linea de factura', required=True),
+		'name': fields.many2one('account.invoice','Número de documento', required=False),
+		'invoice_line_id': fields.many2one('account.invoice.line','Linea de factura', required=False),
+		'picking_id': fields.many2one('stock.picking','Orden', required=False),
 		'monto': fields.float('Monto'),
 		'currency_id': fields.many2one('res.currency','Moneda'),
 		'date_invoice':fields.date('Fecha de Factura'),
@@ -735,7 +737,6 @@ class mc_project_project(osv.osv):
 		}
 
 	def _get_price_currency(self, cr, uid, ids, amount, bitacora_currency, date_invoice, context=None):
-		print"GET_CURRENCYYYYYYYYYYYYYYYY Project"
 		price=0.00
 		rate=False
 		project_obj=self.browse(cr, uid, ids, context=context)[0]
@@ -808,3 +809,221 @@ class account_invoice_line(osv.osv):
 		'project_id': fields.many2one('project.project','Proyecto'),
 		}
 account_invoice_line()
+
+class stock_picking_out(osv.osv):
+	_inherit = 'stock.picking.out'
+	_columns = {
+		'project_id': fields.many2one('project.project','Proyecto'),
+		}
+	def onchange_project_id(self, cr, uid, ids, project_id, context=None):
+		if not ids:
+			raise osv.except_osv(('Error'),("\n Los cambios no han sido aplicados: Debería intentar guardar primero el formulario."))
+			return True
+		move_lines_obj = self.pool.get('stock.move')
+		conditions = move_lines_obj.search(cr, uid, [('picking_id', '=', ids[0])])
+		move_lines=move_lines_obj.browse(cr, uid, conditions, context=context)
+		for m in move_lines:
+			m.write({'project_id':project_id})
+		return True
+stock_picking_out()
+
+class stock_picking(osv.osv):
+	_inherit = 'stock.picking'
+	_columns = {
+		'project_id': fields.many2one('project.project','Proyecto'),
+		}
+stock_picking()
+
+class stock_move(osv.osv):
+	_inherit = 'stock.move'
+	_columns = {
+		'project_id': fields.many2one('project.project','Proyecto'),
+		'dev_origin_move_id': fields.many2one('stock.move','Movimiento origen de devolucion'),
+		}
+stock_move()
+
+class stock_partial_picking(osv.osv_memory):
+	_inherit = 'stock.partial.picking'
+	def _get_price_currency(self, cr, uid, ids, amount, product_currency, project, date_invoice, context=None):
+		price=0.00
+		rate=False
+		if product_currency.id!=project.currency_id2.id:
+			if product_currency.name=="USD": #PASA DE DOLARES A COLONES
+				rate_obj=self.pool.get('res.currency.rate')
+				conditions = rate_obj.search(cr, uid, [('currency_id','=',product_currency.id),('name','<=',date_invoice)],order='name desc')
+				rate=rate_obj.browse(cr, uid, conditions,context=context)[0]
+				if rate.rate!=0:
+					price=amount/(rate.rate)
+					print"DOLARES A COLONES: "+str(price)
+			else: #PASA DE COLONES A DOLARES#TODO
+				rate_obj=self.pool.get('res.currency.rate')
+				conditions = rate_obj.search(cr, uid, [('currency_id','=',project.currency_id2.id),('name','<=',date_invoice)],order='name desc')
+				rate=rate_obj.browse(cr, uid, conditions,context=context)[0]
+				price=amount*(rate.rate)
+				print"COLONES A DOLARES: "+str(price)
+		else:
+			price=amount
+			print"PRECIO NO CAMBIA: "+str(price)
+			print "project_currency: "+str(product_currency.name)
+			print "project_obj_currency: "+str(project.currency_id2.name)
+		return price
+
+	def _partial_move_for(self, cr, uid, move, context=None):
+		res = super(stock_partial_picking, self)._partial_move_for(cr, uid, move, context=context)
+		res.update({'project_id': move.project_id.id})
+		return res
+	
+	def do_partial(self, cr, uid, ids, context=None):#ESTÁ PONIENDO LINEAS POR SEPARADO #TODO
+		res = super(stock_partial_picking, self).do_partial(cr, uid, ids, context=context)
+		partial_line_obj=self.browse(cr, uid, ids[0], context=context).move_ids
+		bitacora_obj = self.pool.get('mc.proyectos.bitacora')
+		move_line_obj = self.pool.get('account.invoice.line')
+		dev=False
+		partial_line_obj_sorted = sorted(partial_line_obj, key=lambda partial_line_obj: partial_line_obj.project_id.id)#LISTA DE LINEAS ORDENAS POR PROYECTO
+
+		bitacora_dict=[]
+		current_project=0
+
+		#####################################
+		first=True
+		monto_costo=0.00
+		pos=0
+		for l in partial_line_obj_sorted:
+			if l.project_id:
+				if first:
+					current_project=l.project_id
+				if current_project.id!=l.project_id.id:
+					if l.wizard_id.picking_id.type=='in':
+						monto_costo=monto_costo*-1
+					bitacora_dict.append({'picking_id': l.wizard_id.picking_id.id ,'monto': monto_costo,'currency_id': current_project.currency_id2.id, 'proyecto_id': current_project.id, 'date_invoice': l.wizard_id.picking_id.date})
+					monto_costo=0.00
+					current_project=l.project_id
+				monto_costo+=self._get_price_currency(cr, uid, ids, (l.product_id.list_price*l.quantity), l.product_id.currency_id, current_project, l.wizard_id.picking_id.date)
+
+				if pos==len(partial_line_obj_sorted)-1:
+					if l.wizard_id.picking_id.type=='in':
+						monto_costo=monto_costo*-1
+					bitacora_dict.append({'picking_id': l.wizard_id.picking_id.id ,'monto': monto_costo,'currency_id': current_project.currency_id2.id, 'proyecto_id': current_project.id, 'date_invoice': l.wizard_id.picking_id.date})
+				first=False
+				pos+=1
+		#####################################
+
+		#CREATE BITACORA
+		for b in bitacora_dict:
+			bitacora_obj.create(cr, uid, b,context=context)
+		#raise osv.except_osv(('Progra!'),("\n DIS"))
+		return res
+
+stock_partial_picking()
+
+class stock_partial_picking_line(osv.TransientModel):
+	_inherit = 'stock.partial.picking.line'
+	_columns = {
+		'project_id': fields.many2one('project.project','Proyecto'),
+		}
+stock_partial_picking_line()
+
+class stock_return_picking(osv.osv_memory):
+	_inherit = 'stock.return.picking'
+
+	def create_returns(self, cr, uid, ids, context=None):
+		#res = super(stock_return_picking, self).create_returns(cr, uid, ids, context=context)
+		"""
+		 Creates return picking.
+		 @param self: The object pointer.
+		 @param cr: A database cursor
+		 @param uid: ID of the user currently logged in
+		 @param ids: List of ids selected
+		 @param context: A standard dictionary
+		 @return: A dictionary which of fields with values.
+		"""
+		if context is None:
+			context = {} 
+		record_id = context and context.get('active_id', False) or False
+		move_obj = self.pool.get('stock.move')
+		pick_obj = self.pool.get('stock.picking')
+		uom_obj = self.pool.get('product.uom')
+		data_obj = self.pool.get('stock.return.picking.memory')
+		act_obj = self.pool.get('ir.actions.act_window')
+		model_obj = self.pool.get('ir.model.data')
+		wf_service = netsvc.LocalService("workflow")
+		pick = pick_obj.browse(cr, uid, record_id, context=context)
+		data = self.read(cr, uid, ids[0], context=context)
+		date_cur = time.strftime('%Y-%m-%d %H:%M:%S')
+		set_invoice_state_to_none = True
+		returned_lines = 0
+		
+#		Create new picking for returned products
+
+		seq_obj_name = 'stock.picking'
+		new_type = 'internal'
+		if pick.type =='out':
+			new_type = 'in'
+			seq_obj_name = 'stock.picking.in'
+		elif pick.type =='in':
+			new_type = 'out'
+			seq_obj_name = 'stock.picking.out'
+		new_pick_name = self.pool.get('ir.sequence').get(cr, uid, seq_obj_name)
+		new_picking = pick_obj.copy(cr, uid, pick.id, {
+										'name': _('%s-%s-return') % (new_pick_name, pick.name),
+										'move_lines': [], 
+										'state':'draft', 
+										'backorder_id': False,
+										'type': new_type,
+										'date':date_cur, 
+										'invoice_state': data['invoice_state'],
+		})
+		
+		val_id = data['product_return_moves']
+		for v in val_id:
+			data_get = data_obj.browse(cr, uid, v, context=context)
+			mov_id = data_get.move_id.id
+			if not mov_id:
+				raise osv.except_osv(_('Warning !'), _("You have manually created product lines, please delete them to proceed"))
+			new_qty = data_get.quantity
+			move = move_obj.browse(cr, uid, mov_id, context=context)
+			new_location = move.location_dest_id.id
+			returned_qty = move.product_qty
+			for rec in move.move_history_ids2:
+				returned_qty -= rec.product_qty
+
+			if returned_qty != new_qty:
+				set_invoice_state_to_none = False
+			if new_qty:
+				returned_lines += 1
+				new_move=move_obj.copy(cr, uid, move.id, {
+											'product_qty': new_qty,
+											'product_uos_qty': uom_obj._compute_qty(cr, uid, move.product_uom.id, new_qty, move.product_uos.id),
+											'picking_id': new_picking, 
+											'state': 'draft',
+											'location_id': new_location, 
+											'location_dest_id': move.location_id.id,
+											'date': date_cur,
+											'prodlot_id': data_get.prodlot_id.id,
+											'dev_origin_move_id': move.id,
+				})
+				move_obj.write(cr, uid, [move.id], {'move_history_ids2':[(4,new_move)]}, context=context)
+		if not returned_lines:
+			raise osv.except_osv(_('Warning!'), _("Please specify at least one non-zero quantity."))
+
+		if set_invoice_state_to_none:
+			pick_obj.write(cr, uid, [pick.id], {'invoice_state':'none'}, context=context)
+		wf_service.trg_validate(uid, 'stock.picking', new_picking, 'button_confirm', cr)
+		pick_obj.force_assign(cr, uid, [new_picking], context)
+		# Update view id in context, lp:702939
+		model_list = {
+				'out': 'stock.picking.out',
+				'in': 'stock.picking.in',
+				'internal': 'stock.picking',
+		}
+		#raise osv.except_osv(('Progra!'),("\n create_returns"))
+		return {
+			'domain': "[('id', 'in', ["+str(new_picking)+"])]",
+			'name': _('Returned Picking'),
+			'view_type':'form',
+			'view_mode':'tree,form',
+			'res_model': model_list.get(new_type, 'stock.picking'),
+			'type':'ir.actions.act_window',
+			'context':context,
+		}
+stock_return_picking()
