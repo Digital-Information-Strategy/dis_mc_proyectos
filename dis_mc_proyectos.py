@@ -113,7 +113,7 @@ class sale_order(osv.osv):
 		conditions = lines_obj.search(cr, uid, [('order_id', '=', ids[0]), ('materials_list_id','=',materials_list_id)])
 		res=0
 		for line in lines_obj.browse(cr, uid, conditions, context=context):
-			if line.product_id and line.product_id.type=="service" and line.product_id.servicio_total==False:
+			if line.product_id and line.product_id.type=="service":# and line.product_id.servicio_total==False:
 				res+=line.price_subtotal
 				print "RESSSSSSSSSSSSSSSSSSSSSS_: "+str(line.price_subtotal)+" "+str(line.name)
 		return res
