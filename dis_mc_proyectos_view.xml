@@ -329,7 +329,7 @@
 			<field name="inherit_id" ref="stock.view_picking_form"/>
 			<field name="arch" type="xml">
 				<xpath expr="//field[@name='origin']" position="after">
-					<field name="project_id" on_change="onchange_project_id(project_id)" domain="[('state','in',('draft','open'))]"/>
+					<field name="project_id" on_change="onchange_project_id(project_id)" attrs="{'readonly':[('state','not in',('draft','auto','confirmed','assigned'))]}" domain="[('state','in',('draft','open'))]"/>
 				</xpath>
 			</field>
 		</record>
