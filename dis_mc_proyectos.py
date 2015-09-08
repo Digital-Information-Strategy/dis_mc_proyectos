@@ -640,6 +640,47 @@ class sale_order_line(osv.osv):
 		'price_subtotal_cost': fields.function(_amount_line_cost, string='Subtotal Cost', digits_compute= dp.get_precision('Account')),
 		'materials_list_id': fields.many2one('materials.list','Lista de materiales'),
 		}
+
+	def _get_price_currency(self, cr, uid, ids, amount, product_currency, pricelist, date_order, context=None):
+		print"GET COSTTTTTTTTTTTTT CURRENCY"
+		price=0.00
+		rate=False
+		pricelist_id=self.pool.get('product.pricelist').browse(cr, uid, pricelist, context=context)
+		if product_currency.id!=pricelist_id.currency_id.id:
+			if product_currency.name=="USD": #PASA DE DOLARES A COLONES
+				rate_obj=self.pool.get('res.currency.rate')
+				conditions = rate_obj.search(cr, uid, [('currency_id','=',product_currency.id),('name','<=',date_order)],order='name desc')
+				rate=rate_obj.browse(cr, uid, conditions,context=context)[0]
+				if rate.rate!=0:
+					price=amount/(rate.rate)
+					print"DOLARES A COLONES: "+str(price)
+			else: #PASA DE COLONES A DOLARES
+				rate_obj=self.pool.get('res.currency.rate')
+				conditions = rate_obj.search(cr, uid, [('currency_id','=',pricelist_id.currency_id.id),('name','<=',date_order)],order='name desc')
+				rate=rate_obj.browse(cr, uid, conditions,context=context)[0]
+				price=amount*(rate.rate)
+				print"COLONES A DOLARES: "+str(price)
+		else:
+			price=amount
+			print"PRECIO NO CAMBIA: "+str(price)
+			print "product_currency: "+str(product_currency.name)
+			print "sale_order_currency: "+str(pricelist_id.currency_id.name)
+		return price
+
+	def product_id_change(self, cr, uid, ids, pricelist, product, qty=0,
+			uom=False, qty_uos=0, uos=False, name='', partner_id=False,
+			lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False, context=None):
+
+		res=super(sale_order_line, self).product_id_change(cr, uid, ids, pricelist, product, qty=qty,
+			uom=uom, qty_uos=qty_uos, uos=uos, name=name, partner_id=partner_id,
+			lang=lang, update_tax=update_tax, date_order=date_order, packaging=packaging, fiscal_position=fiscal_position, flag=flag, context=context)
+		if product:
+			p=self.pool.get('product.product').browse(cr, uid, product, context=context)
+			value=res.get('value')
+			value.update({'price_unit_cost': self._get_price_currency(cr, uid, ids, p.standard_price, p.currency_id, pricelist, date_order, context=context)})
+			res.update({'value': value})
+		return res
+
 sale_order_line()
 class sale_order_materials_line(osv.osv):
 	_name = 'sale.order.materials.line'
@@ -702,7 +743,7 @@ class project_bitacora(osv.osv):
 	_name = 'mc.proyectos.bitacora'
 	_columns = {
 		'proyecto_id': fields.many2one('project.project', ondelete='cascade', required=True),
-		'name': fields.many2one('account.invoice','Número de documento', required=False),
+		'name': fields.many2one('account.invoice','Factura', required=False),
 		'invoice_line_id': fields.many2one('account.invoice.line','Linea de factura', required=False),
 		'picking_id': fields.many2one('stock.picking','Orden', required=False),
 		'monto': fields.float('Monto'),
@@ -898,7 +939,7 @@ class stock_partial_picking(osv.osv_memory):
 					bitacora_dict.append({'picking_id': l.wizard_id.picking_id.id ,'monto': monto_costo,'currency_id': current_project.currency_id2.id, 'proyecto_id': current_project.id, 'date_invoice': l.wizard_id.picking_id.date})
 					monto_costo=0.00
 					current_project=l.project_id
-				monto_costo+=self._get_price_currency(cr, uid, ids, (l.product_id.list_price*l.quantity), l.product_id.currency_id, current_project, l.wizard_id.picking_id.date)
+				monto_costo+=self._get_price_currency(cr, uid, ids, (l.product_id.standard_price*l.quantity), l.product_id.currency_id, current_project, l.wizard_id.picking_id.date)
 
 				if pos==len(partial_line_obj_sorted)-1:
 					if l.wizard_id.picking_id.type=='in':

@@ -233,6 +233,9 @@
 			<field name="type">form</field>
 			<field name="inherit_id" ref="sale.view_order_form"/>
 			<field name="arch" type="xml">
+				<xpath expr="//tree[@string='Sales Order Lines']/field[@name='price_unit']" position="after">
+					<field name="price_unit_cost" invisible="1"/>
+				</xpath>
 				<xpath expr="//page[@string='Order Lines']" position="before">
 					<page string="Lista de Materiales">
 						<button name="btn_cargar" string="Cargar" class="oe_highlight" type="object" attrs="{'invisible':[('state','not in',['draft','sent'])]}" context="{'sale_materials_list_line':sale_materials_list_line, 'partner_id':partner_id, 'pricelist_id':pricelist_id, 'date_order':date_order}"/>
@@ -249,8 +252,8 @@
 					<page string="Líneas de Costo">
 					<button name="btn_limpiar_lineas" string="Quitar lineas" type="object" icon="STOCK_DIALOG_ERROR" class="oe_inline"/>
 						<field name="sale_cost_list_line" readonly="0">
-						   	<tree string="Lista de Materiales" editable="bottom">
-								<field name="product_id"/>
+						   	<tree string="Líneas de Costo" editable="bottom">
+								<field name="product_id" on_change="product_id_change(parent.pricelist_id, product_id, product_uom_qty, False, product_uos_qty, False, name, parent.partner_id, False, True, parent.date_order, False, parent.fiscal_position, False, context)"/>
 								<field name="name"/>
 								<field name="state" invisible="1"/>
 								<field name="product_uom_qty"/>
@@ -258,6 +261,8 @@
 								<field name="price_unit_cost"/>
 								<field name="discount"/>
 								<field name="price_subtotal_cost"/>
+								<field name="product_uos_qty" invisible="1"/>
+								<field name="price_unit" invisible="1"/>
 							</tree>
 						</field>
 						<group class="oe_subtotal_footer oe_right" colspan="2" name="sale_cost_total">
@@ -280,6 +285,7 @@
 					<field name="genera_proyecto" attrs="{'readonly':[('proyecto','&lt;&gt;',False)]}"/>
 					<field name="proyecto" attrs="{'invisible':[('genera_proyecto','=',False)]}" readonly="1"/>
 				</xpath>
+
 			</field>
 	</record>
 	
