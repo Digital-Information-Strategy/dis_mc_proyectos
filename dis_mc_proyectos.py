@@ -329,7 +329,6 @@ class sale_order(osv.osv):
 									'product_uom_qty':float(localdict['result']),
 									'product_uom':linea.cerca_id.uom_id.id,
 									'tax_id':imp_id,
-									#'price_unit':linea.cerca_id.list_price,#revisar como lo hace el odoo en sale_order
 									'price_unit':price_currency,
 									'price_unit_cost':price_currency,
 									})
@@ -347,7 +346,6 @@ class sale_order(osv.osv):
 									'product_uom_qty':float(localdict['result']),
 									'product_uom':linea.tubo_vertical_id.uom_id.id,
 									'tax_id':imp_id,
-									#'price_unit':linea.tubo_vertical_id.list_price,#revisar como lo hace el odoo en sale_order
 									'price_unit':price_currency,
 									'price_unit_cost':price_currency,
 									})
@@ -365,7 +363,6 @@ class sale_order(osv.osv):
 									'product_uom_qty':float(localdict['result']),
 									'product_uom':linea.tubo_horizontal_id.uom_id.id,
 									'tax_id':imp_id,
-									#'price_unit':linea.tubo_horizontal_id.list_price,#revisar como lo hace el odoo en sale_order
 									'price_unit':price_currency,
 									'price_unit_cost':price_currency,
 									})
@@ -382,8 +379,7 @@ class sale_order(osv.osv):
 									'name':linea.tubo_arriostre_id.name,
 									'product_uom_qty':float(localdict['result']),
 									'product_uom':linea.tubo_arriostre_id.uom_id.id,
-									#'tax_id':imp_id,
-									#'price_unit':linea.tubo_arriostre_id.list_price,#revisar como lo hace el odoo en sale_order
+									'tax_id':imp_id,
 									'price_unit':price_currency,
 									'price_unit_cost':price_currency,
 									})
@@ -400,8 +396,7 @@ class sale_order(osv.osv):
 									'name':linea.mano_obra_id.name,
 									'product_uom_qty':float(localdict['result']),
 									'product_uom':linea.mano_obra_id.uom_id.id,
-									#'tax_id':imp_id,
-									#'price_unit':linea.tubo_arriostre_id.list_price,#revisar como lo hace el odoo en sale_order
+									'tax_id':imp_id,
 									'price_unit':price_currency,
 									'price_unit_cost':price_currency,
 									})
@@ -418,8 +413,7 @@ class sale_order(osv.osv):
 									'name':linea.tuberia_marco_id.name,
 									'product_uom_qty':float(localdict['result']),
 									'product_uom':linea.tuberia_marco_id.uom_id.id,
-									#'tax_id':imp_id,
-									#'price_unit':linea.tubo_arriostre_id.list_price,#revisar como lo hace el odoo en sale_order
+									'tax_id':imp_id,
 									'price_unit':price_currency,
 									'price_unit_cost':price_currency,
 									})
@@ -436,7 +430,7 @@ class sale_order(osv.osv):
 									'name':linea.tuberia_diagonal_id.name,
 									'product_uom_qty':float(localdict['result']),
 									'product_uom':linea.tuberia_diagonal_id.uom_id.id,
-									#'tax_id':imp_id,
+									'tax_id':imp_id,
 									#'price_unit':linea.tubo_arriostre_id.list_price,#revisar como lo hace el odoo en sale_order
 									'price_unit':price_currency,
 									'price_unit_cost':price_currency,
@@ -454,8 +448,7 @@ class sale_order(osv.osv):
 									'name':linea.refuerzo_horizontal_id.name,
 									'product_uom_qty':float(localdict['result']),
 									'product_uom':linea.refuerzo_horizontal_id.uom_id.id,
-									#'tax_id':imp_id,
-									#'price_unit':linea.tubo_arriostre_id.list_price,#revisar como lo hace el odoo en sale_order
+									'tax_id':imp_id,
 									'price_unit':price_currency,
 									'price_unit_cost':price_currency,
 									})
@@ -464,16 +457,15 @@ class sale_order(osv.osv):
 						productos_dict[ml.product_id.default_code]=localdict['result']
 						vals={}
 						#print "print: "+str(ml.product_id.taxes_id[0].id)
-						price_currency=self._get_price_currency( cr, uid, ids, linea.refuerzo_horizontal_id.standard_price, linea.tuberia_columnas_id.currency_id, context=None)
+						price_currency=self._get_price_currency( cr, uid, ids, linea.tuberia_columnas_id.standard_price, linea.tuberia_columnas_id.currency_id, context=None)
 						vals.update({
 									'order_id':ids[0],
 									'materials_list_id':linea.materials_list_id.id,
-									'product_id':linea.refuerzo_horizontal_id.id,
-									'name':linea.refuerzo_horizontal_id.name,
+									'product_id':linea.tuberia_columnas_id.id,
+									'name':linea.tuberia_columnas_id.name,
 									'product_uom_qty':float(localdict['result']),
-									'product_uom':linea.refuerzo_horizontal_id.uom_id.id,
-									#'tax_id':imp_id,
-									#'price_unit':linea.tubo_arriostre_id.list_price,#revisar como lo hace el odoo en sale_order
+									'product_uom':linea.tuberia_columnas_id.uom_id.id,
+									'tax_id':imp_id,
 									'price_unit':price_currency,
 									'price_unit_cost':price_currency,
 									})
@@ -485,7 +477,6 @@ class sale_order(osv.osv):
 						#print "print: "+str(ml.product_id.taxes_id[0].id)
 						precio_unidad=0
 						#if ml.product_id.type!="service":
-						#TODO VIERNES
 						precio_unidad=ml.product_id.standard_price
 						precio_unidad=self._get_price_currency( cr, uid, ids, precio_unidad, ml.product_id.currency_id, context=None)
 						vals.update({
@@ -496,7 +487,6 @@ class sale_order(osv.osv):
 									'product_uom_qty':float(localdict['result']),
 									'product_uom':ml.product_id.uom_id.id,
 									'tax_id':imp_id,
-									#'price_unit':ml.product_id.list_price,#revisar como lo hace el odoo en sale_order
 									'price_unit':precio_unidad,
 									'price_unit_cost':precio_unidad,
 									})
@@ -512,7 +502,6 @@ class sale_order(osv.osv):
 									'product_uom_qty':1,
 									'product_uom':linea.servicio_total_id.uom_id.id,
 									#'tax_id':imp_id,
-									#'price_unit':ml.product_id.list_price,#revisar como lo hace el odoo en sale_order
 									'price_unit': 0,
 									'price_unit_cost': 0,
 									})
@@ -568,9 +557,7 @@ class sale_order(osv.osv):
 	def action_button_confirm(self, cr, uid, ids, context=None):
 		sale_order_obj=self.pool.get('sale.order').browse(cr, uid, ids[0], context=context)
 		res = super(sale_order, self).action_button_confirm(cr, uid, ids, context=context)
-		#print "PROYECTOOOOOOOOOOOOOOO: "+str(sale_order_obj.proyecto)
 		if sale_order_obj.genera_proyecto==True:
-			#print "PROYECTOOOOOOOOOOOOOOO: "+str(sale_order_obj.pricelist_id.currency_id.name)
 			vals={}
 			vals.update({
 						'name': "Proyecto-"+sale_order_obj.name,
@@ -581,8 +568,17 @@ class sale_order(osv.osv):
 						'utilidad': False,
 						})
 			p=self.pool.get('project.project').create(cr, uid, vals, context=context)
+			for l in sale_order_obj.order_line:
+				if l.product_id.type=='product':
+					self.pool.get('mc.bom.presupuestado').create(cr, uid, {
+						'project_id': p,
+						'product_id': l.product_id.id,
+						'name': l.name,
+						'order_id': l.order_id.id,
+						'product_uom_qty': l.product_uom_qty,
+						'product_uom': l.product_uom.id
+					}, context=context)
 			self.write(cr, uid, ids, {'proyecto': p},context=context)
-			#print "Project created..."
 		return True
 sale_order()
 
@@ -752,6 +748,32 @@ class project_bitacora(osv.osv):
 		}
 project_bitacora()
 
+class BomPresupuestado(osv.osv):
+	_name = 'mc.bom.presupuestado'
+	_columns = {
+		'project_id': fields.many2one('project.project', ondelete='cascade', required=True),
+		'order_id': fields.many2one('sale.order', 'Pedido de Venta', required=True),
+		'name': fields.text('Descripción', required=True),
+		'product_id': fields.many2one('product.product', 'Producto'),
+		'product_uom_qty': fields.float('Cantidad', digits_compute= dp.get_precision('Product UoS')),
+		'product_uom': fields.many2one('product.uom', 'Unidad de medida '),
+	}
+
+BomPresupuestado()
+
+class BomEjecutado(osv.osv):
+	_name = 'mc.bom.ejecutado'
+	_columns = {
+		'project_id': fields.many2one('project.project', ondelete='cascade', required=True),
+		'picking_id': fields.many2one('stock.picking', 'Orden', required=True),
+		'name': fields.text('Descripción', required=True),
+		'product_id': fields.many2one('product.product', 'Producto'),
+		'product_uom_qty': fields.float('Cantidad', digits_compute= dp.get_precision('Product UoS')),
+		'product_uom': fields.many2one('product.uom', 'Unidad de medida '),
+	}
+
+BomEjecutado()
+
 class mc_project_project(osv.osv):
 	_inherit = 'project.project'
 	def _get_utilidad(self, cr, uid, ids, name, args, context=None):
@@ -765,7 +787,8 @@ class mc_project_project(osv.osv):
 		bitacora_obj = self.pool.get('mc.proyectos.bitacora')
 		conditions = bitacora_obj.search(cr, uid, [('proyecto_id','=',ids[0])])
 		for b in bitacora_obj.browse(cr, uid, conditions, context=context):
-			total_costo+=self._get_price_currency(cr, uid, ids, b.monto, b.currency_id, b.date_invoice)
+			if b.date_invoice:
+				total_costo+=self._get_price_currency(cr, uid, ids, b.monto, b.currency_id, b.date_invoice)
 		for i in self.browse(cr, uid, ids, context=context):
 			vals[i.id]=float(total_costo)
 		return vals
@@ -774,6 +797,8 @@ class mc_project_project(osv.osv):
 		'costos': fields.function(_get_costo, string='Costos',type='float', store=False),
 		'utilidad': fields.function(_get_utilidad, string='Utilidad',type='float', store=False),
 		'bitacora': fields.one2many('mc.proyectos.bitacora','proyecto_id','Bitácora'),
+		'bom_presupuestado_line': fields.one2many('mc.bom.presupuestado','project_id','Bom Presupuestado'),
+		'bom_ejecutado_line': fields.one2many('mc.bom.ejecutado','project_id','Bom Ejecutado'),
 		'currency_id2': fields.many2one('res.currency','Moneda', help="Moneda tomada desde el pedido de venta"),
 		}
 
@@ -792,6 +817,8 @@ class mc_project_project(osv.osv):
 			else: #PASA DE COLONES A DOLARES#TODO
 				rate_obj=self.pool.get('res.currency.rate')
 				conditions = rate_obj.search(cr, uid, [('currency_id','=',project_obj.currency_id2.id),('name','<=',date_invoice)],order='name desc')
+				print"MONEDAAAAAAAAAAAAAAAAAAAAAAAA: ",project_obj.currency_id2.name
+				print"FECHAAAAAAAAAAAAAAAAAAAAAAAAA: ",date_invoice
 				rate=rate_obj.browse(cr, uid, conditions,context=context)[0]
 				price=amount*(rate.rate)
 				print"COLONES A DOLARES: "+str(price)
@@ -931,6 +958,21 @@ class stock_partial_picking(osv.osv_memory):
 		pos=0
 		for l in partial_line_obj_sorted:
 			if l.project_id:
+
+				if l.wizard_id.picking_id.type=='in':
+					project_product_uom_qty=l.quantity*-1
+				else:
+					project_product_uom_qty=l.quantity
+
+				if l.product_id.type=='product':
+					self.pool.get('mc.bom.ejecutado').create(cr, uid, {
+						'project_id': l.project_id.id,
+						'product_id': l.product_id.id,
+						'name': l.product_id.name,
+						'picking_id': l.wizard_id.picking_id.id,
+						'product_uom_qty': project_product_uom_qty,
+						'product_uom': l.product_uom.id
+					}, context=context)
 				if first:
 					current_project=l.project_id
 				if current_project.id!=l.project_id.id:

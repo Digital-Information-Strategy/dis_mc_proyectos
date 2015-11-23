@@ -163,6 +163,29 @@
 							<field name="utilidad" readonly="1"/>
 						</group>
 					</page>
+					<page string="Bom Presupuestado">
+						<field name="bom_presupuestado_line" readonly="1">
+						   	<tree string="Bom Presupuestado" editable="bottom">
+								<field name="product_id"/>
+								<field name="name"/>
+								<field name="order_id"/>
+								<field name="product_uom"/>
+								<field name="product_uom_qty" sum="Cantidad Total"/>
+							</tree>
+						</field>
+					</page>
+					<page string="Bom Ejecutado">
+						<field name="bom_ejecutado_line" readonly="1">
+						   	<tree string="Bom Ejecutado" editable="bottom">
+								<field name="product_id"/>
+								<field name="name"/>
+								<field name="picking_id"/>
+								<field name="product_uom"/>
+								<field name="product_uom_qty" sum="Cantidad Total"/>
+							</tree>
+						</field>
+					</page>
+
 				</xpath>
 			</field>
 	</record>
